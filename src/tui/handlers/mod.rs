@@ -668,6 +668,16 @@ pub(crate) fn clear_active_track_filter(app: &mut App) -> bool {
   }
 }
 
+/// Dismiss the dialog on top of the stack: Esc and the back key share this so neither
+/// leaves its state behind.
+pub(crate) fn close_dialog_route(app: &mut App, dialog_context: crate::core::app::DialogContext) {
+  if dialog_context == crate::core::app::DialogContext::PersistKeybindingFallback {
+    app.set_status_message(app.strings().status.app.shortcut_session_only, 4);
+  }
+  app.pop_navigation_stack();
+  app.clear_dialog_state();
+}
+
 fn handle_escape(app: &mut App) {
   match app.get_current_route().active_block {
     // Delegated rather than duplicated, the way `ActiveBlock::Friends` is below.
@@ -687,13 +697,7 @@ fn handle_escape(app: &mut App) {
     ActiveBlock::Error => {
       app.pop_navigation_stack();
     }
-    ActiveBlock::Dialog(dialog_context) => {
-      if dialog_context == crate::core::app::DialogContext::PersistKeybindingFallback {
-        app.set_status_message(app.strings().status.app.shortcut_session_only, 4);
-      }
-      app.pop_navigation_stack();
-      app.clear_dialog_state();
-    }
+    ActiveBlock::Dialog(dialog_context) => close_dialog_route(app, dialog_context),
     ActiveBlock::HelpMenu => {
       if app.view.help_filter_editing || !app.view.help_filter.is_empty() {
         help_menu::clear_filter(app);
