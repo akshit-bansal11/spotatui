@@ -57,6 +57,25 @@ const player = (
   );
 
 describe("PlayerBar", () => {
+  it("player bar icon buttons show their label on hover", () => {
+    const paused = player(song);
+    expect(tag(paused, "Shuffle")).toContain('title="Shuffle"');
+    expect(tag(paused, "Play")).toContain('title="Play"');
+    expect(tag(paused, "Mute")).toContain('title="Mute"');
+    expect(tag(paused, "Lyrics")).toContain('title="Lyrics (l)"');
+    expect(tag(paused, "Queue")).toContain('title="Queue (Shift+Q)"');
+    expect(tag(paused, "Full screen")).toContain('title="Full screen (r)"');
+    const playing = player({ ...song, is_playing: true });
+    expect(tag(playing, "Pause")).toContain('title="Pause"');
+    const repeated = player({ ...song, repeat: "track" });
+    expect(tag(repeated, "Repeat one")).toContain('title="Repeat one"');
+    expect(tag(player(song, { volume: 0 }), "Unmute")).toContain(
+      'title="Unmute"',
+    );
+    const spotify = player({ ...song, uri: "spotify:track:abc" });
+    expect(tag(spotify, "Like")).toContain('title="Like"');
+  });
+
   it("shows the source, the position and the length of a paused song", () => {
     const html = player(song);
     expect(html).toContain("Set Fire to the Rain");
@@ -344,6 +363,11 @@ describe("TopBar", () => {
   );
   const bar = (options: Parameters<typeof topBar>[0] = {}) =>
     renderToStaticMarkup(topBar(options));
+
+  it("the Back and Forward arrows show their name on hover", () => {
+    expect(tag(bar(), "Go back")).toContain('title="Go back"');
+    expect(tag(bar(), "Go forward")).toContain('title="Go forward"');
+  });
 
   it("the gear opens Settings and is marked on the Settings page", () => {
     const pages: Page[] = [];

@@ -71,6 +71,7 @@ export function TopBar({
           type="button"
           className="history-button"
           aria-label={s.go_back}
+          title={s.go_back}
           disabled={!canBack}
           onClick={onBack}
         >
@@ -80,6 +81,7 @@ export function TopBar({
           type="button"
           className="history-button"
           aria-label={s.go_forward}
+          title={s.go_forward}
           disabled={!canForward}
           onClick={onForward}
         >

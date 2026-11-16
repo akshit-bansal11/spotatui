@@ -25,6 +25,7 @@ export function Transport({
         type="button"
         className="icon-button"
         aria-label={s.shuffle}
+        title={s.shuffle}
         aria-pressed={item?.shuffle ?? false}
         disabled={!connected}
         onClick={() => send("ToggleShuffle")}
@@ -35,6 +36,7 @@ export function Transport({
         type="button"
         className="icon-button"
         aria-label={s.previous}
+        title={s.previous}
         disabled={!connected}
         onClick={() => send("PreviousTrack")}
       >
@@ -44,6 +46,7 @@ export function Transport({
         type="button"
         className="play-toggle"
         aria-label={playing ? s.pause : s.play}
+        title={playing ? s.pause : s.play}
         disabled={!connected}
         onClick={() => send("TogglePlayback")}
       >
@@ -53,6 +56,7 @@ export function Transport({
         type="button"
         className="icon-button"
         aria-label={s.next}
+        title={s.next}
         disabled={!connected}
         onClick={() => send("NextTrack")}
       >
@@ -62,6 +66,7 @@ export function Transport({
         type="button"
         className="icon-button"
         aria-label={repeat === "track" ? s.repeat_one : s.repeat}
+        title={repeat === "track" ? s.repeat_one : s.repeat}
         aria-pressed={repeat !== "off"}
         disabled={!connected}
         onClick={() => send("CycleRepeat")}
