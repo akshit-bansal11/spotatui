@@ -25,6 +25,10 @@
 
 - **Remove single-file plugins from the CLI**: `spotatui plugin remove flat.lua` now removes a loose Lua plugin using the exact filename shown by `plugin list`, while preserving other loose files ([#1048](https://github.com/LargeModGames/spotatui/issues/1048)).
 
+### Changed
+
+- Tests now pin the recap period keys and the 7-day and 30-day window edges ([#1023](https://github.com/LargeModGames/spotatui/issues/1023)).
+
 ### Documentation
 
 - **Document `SPOTATUI_PAUSE_ON_PANIC`**: explain how setting `SPOTATUI_PAUSE_ON_PANIC` keeps the Windows console window open after a panic to read the crash message and log path ([#1065](https://github.com/LargeModGames/spotatui/issues/1065)).
