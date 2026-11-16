@@ -44,6 +44,7 @@ pub const ZH_HANT: GuiStrings = GuiStrings {
   nothing_playing: "目前沒有播放",
   nothing_is_playing: "目前沒有播放。",
   nothing_queued: "佇列是空的。",
+  clear_queue: "清空",
   now_playing: "正在播放",
   now_playing_view: "正在播放畫面",
   close_now_playing: "關閉正在播放畫面",

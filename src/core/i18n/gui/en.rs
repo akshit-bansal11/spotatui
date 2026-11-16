@@ -43,6 +43,7 @@ pub const EN: GuiStrings = GuiStrings {
   change_visualizer: "Click to change the visualizer",
   nothing_is_playing: "Nothing is playing.",
   nothing_queued: "Nothing is queued.",
+  clear_queue: "Clear",
   now_playing: "Now playing",
   now_playing_view: "Now playing view",
   close_now_playing: "Close now playing view",

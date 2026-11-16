@@ -109,6 +109,25 @@ describe("QueueDrawer", () => {
     expect(html).not.toContain("Freeze");
   });
 
+  it("offers a Clear button when songs are queued", () => {
+    const html = drawer("spotify:track:0");
+    expect(html).toContain(">Clear<");
+    expect(html.indexOf(">Clear<")).toBeLessThan(html.indexOf("<ol"));
+  });
+
+  it("hides the Clear button when nothing is queued", () => {
+    const html = renderToStaticMarkup(
+      <QueueDrawer
+        queue={{ ...queue, native: [] }}
+        item={item("spotify:track:0")}
+        send={() => {}}
+        onClose={() => {}}
+      />,
+    );
+    expect(html).toContain("Nothing is queued.");
+    expect(html).not.toContain(">Clear<");
+  });
+
   it("offers a close button and no dialog", () => {
     const html = drawer("spotify:track:0");
     expect(html).toContain('aria-label="Close queue"');
