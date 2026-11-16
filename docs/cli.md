@@ -22,7 +22,26 @@ Running `spotatui` with no subcommand starts the terminal UI. `spotatui --help` 
 
 ## Output format
 
-`--format` (on `playback`, `play`, `list` and `search`) takes these placeholders: `%a` artist, `%b` album, `%p` playlist, `%t` track, `%h` show, `%u` URI, `%f` flags, `%s` status, `%v` volume, `%d` device, `%r` progress.
+`-f, --format <FORMAT>` (on `playback`, `play`, `list` and `search`) takes these placeholders: `%a` artist, `%b` album, `%p` playlist, `%t` track, `%h` show, `%u` URI, `%f` flags, `%s` status, `%v` volume, `%d` device, `%r` progress.
+
+Without `--format`, the default depends on the subcommand and the flag you use:
+
+| Subcommand | When | Default format |
+| --- | --- | --- |
+| `playback` | no other flag | `%f %s %t - %a` |
+| `playback` | `--seek` | `%f %s %t - %a %r` |
+| `playback` | `--volume` | `%v% %f %s %t - %a` |
+| `playback` | `--transfer` | `%f %s %t - %a on %d` |
+| `play` | always | `%f %s %t - %a` |
+| `list` | `--devices` | `%v% %d` |
+| `list` | `--liked` | `%t - %a (%u)` |
+| `list` | `--playlists` | `%p (%u)` |
+| `list` | `--playlist-tracks` | `%t - %a (%u)` |
+| `search` | `--tracks` | `%t - %a (%u)` |
+| `search` | `--playlists` | `%p (%u)` |
+| `search` | `--artists` | `%a (%u)` |
+| `search` | `--albums` | `%b - %a (%u)` |
+| `search` | `--shows` | `%h - %a (%u)` |
 
 ## `playback` (alias `pb`)
 
@@ -78,7 +97,7 @@ spotatui play --playlist --name "Your Playlist" --random
 | `--playlist-tracks <URI>` | List the tracks of a playlist, given its `spotify:playlist:` URI or `open.spotify.com/playlist/` link |
 | `--limit <N>` | Maximum results: 1-50, or any number of tracks with `--playlist-tracks` |
 
-With `--playlist-tracks`, every track of the playlist is listed unless `--limit` stops it earlier, and the default format is `%t - %a (%u)`. A playlist episode fills `%t` with its name and `%h` with its show.
+With `--playlist-tracks`, every track of the playlist is listed unless `--limit` stops it earlier. A playlist episode fills `%t` with its name and `%h` with its show.
 
 ```bash
 spotatui list --liked --limit 50

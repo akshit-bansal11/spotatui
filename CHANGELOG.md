@@ -27,6 +27,7 @@
 
 ### Documentation
 
+- **CLI docs list the output defaults**: `docs/cli.md` now gives the `-f` short flag and the default `--format` of each subcommand and flag ([#1046](https://github.com/LargeModGames/spotatui/issues/1046)).
 - **Document `SPOTATUI_PAUSE_ON_PANIC`**: explain how setting `SPOTATUI_PAUSE_ON_PANIC` keeps the Windows console window open after a panic to read the crash message and log path ([#1065](https://github.com/LargeModGames/spotatui/issues/1065)).
 
 ## [v0.48.0] 2026-11-07
