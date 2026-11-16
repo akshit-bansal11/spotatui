@@ -157,3 +157,17 @@ fn the_soloist_quality_choices_read_in_the_language_without_changing_the_stored_
   assert_eq!(ZH_HANS.settings.option_label(id, "Very high"), "极高");
   assert_eq!(ZH_HANT.settings.option_label(id, "Lossless"), "無損");
 }
+
+#[test]
+fn english_ui_strings_use_the_ellipsis_character() {
+  // Onboarding and the forgetting line print to consoles that may not render `…`.
+  for (key, text) in entries(&EN) {
+    if key.starts_with("onboarding.") || key == "status.runtime.forgetting_spotify_login" {
+      continue;
+    }
+    assert!(
+      !text.contains("..."),
+      "{key} uses three dots instead of `…`: {text:?}"
+    );
+  }
+}
