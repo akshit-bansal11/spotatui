@@ -533,12 +533,30 @@ impl App {
     self.dispatch(IoEvent::TransferPlaybackToDevice(device_id, persist));
   }
 
+  /// Copy `url` and say so; a failed copy keeps its own error.
+  fn copy_link(&mut self, url: String) {
+    let Some(clipboard) = &mut self.clipboard else {
+      return;
+    };
+    match clipboard.set_text(url.clone()) {
+      Ok(()) => self.set_status_message(self.strings().status.app.link_copied(&url), 3),
+      Err(e) => self.handle_error_with_message(
+        anyhow!("failed to set clipboard content: {}", e),
+        self
+          .strings()
+          .status
+          .app
+          .clipboard_set_failed(&e.to_string()),
+      ),
+    }
+  }
+
   pub fn copy_song_url(&mut self) {
     info!("copying song url to clipboard");
-    let clipboard = match &mut self.clipboard {
-      Some(ctx) => ctx,
-      None => return,
-    };
+    if self.clipboard.is_none() {
+      self.set_status_message(self.strings().status.app.clipboard_unavailable, 3);
+      return;
+    }
 
     if let Some(CurrentPlaybackContext {
       item: Some(item), ..
@@ -550,16 +568,7 @@ impl App {
 
           match track_id {
             Some(id) if !id.is_empty() => {
-              if let Err(e) = clipboard.set_text(format!("https://open.spotify.com/track/{}", id)) {
-                self.handle_error_with_message(
-                  anyhow!("failed to set clipboard content: {}", e),
-                  self
-                    .strings()
-                    .status
-                    .app
-                    .clipboard_set_failed(&e.to_string()),
-                );
-              }
+              self.copy_link(format!("https://open.spotify.com/track/{}", id));
             }
             _ => {
               self.handle_error_with_message(
@@ -571,18 +580,7 @@ impl App {
         }
         PlayableItem::Episode(episode) => {
           let episode_id = episode.id.id().to_string();
-          if let Err(e) =
-            clipboard.set_text(format!("https://open.spotify.com/episode/{}", episode_id))
-          {
-            self.handle_error_with_message(
-              anyhow!("failed to set clipboard content: {}", e),
-              self
-                .strings()
-                .status
-                .app
-                .clipboard_set_failed(&e.to_string()),
-            );
-          }
+          self.copy_link(format!("https://open.spotify.com/episode/{}", episode_id));
         }
         _ => {}
       }
@@ -591,10 +589,10 @@ impl App {
 
   pub fn copy_album_url(&mut self) {
     info!("copying album url to clipboard");
-    let clipboard = match &mut self.clipboard {
-      Some(ctx) => ctx,
-      None => return,
-    };
+    if self.clipboard.is_none() {
+      self.set_status_message(self.strings().status.app.clipboard_unavailable, 3);
+      return;
+    }
 
     if let Some(CurrentPlaybackContext {
       item: Some(item), ..
@@ -606,16 +604,7 @@ impl App {
 
           match album_id {
             Some(id) if !id.is_empty() => {
-              if let Err(e) = clipboard.set_text(format!("https://open.spotify.com/album/{}", id)) {
-                self.handle_error_with_message(
-                  anyhow!("failed to set clipboard content: {}", e),
-                  self
-                    .strings()
-                    .status
-                    .app
-                    .clipboard_set_failed(&e.to_string()),
-                );
-              }
+              self.copy_link(format!("https://open.spotify.com/album/{}", id));
             }
             _ => {
               self.handle_error_with_message(
@@ -627,16 +616,7 @@ impl App {
         }
         PlayableItem::Episode(episode) => {
           let show_id = episode.show.id.id().to_string();
-          if let Err(e) = clipboard.set_text(format!("https://open.spotify.com/show/{}", show_id)) {
-            self.handle_error_with_message(
-              anyhow!("failed to set clipboard content: {}", e),
-              self
-                .strings()
-                .status
-                .app
-                .clipboard_set_failed(&e.to_string()),
-            );
-          }
+          self.copy_link(format!("https://open.spotify.com/show/{}", show_id));
         }
         _ => {}
       }

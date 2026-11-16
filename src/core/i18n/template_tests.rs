@@ -834,6 +834,11 @@ fn every_typed_message_fills_its_placeholders_and_preserves_all_arguments() {
       ["SENTINEL_CODE_中"]
     );
     check!(
+      "status_app.link_copied",
+      strings.status.app.link_copied("SENTINEL_URL_中"),
+      ["SENTINEL_URL_中"]
+    );
+    check!(
       "status_app.sync_hint",
       strings.status.app.sync_hint("SENTINEL_HINT_中"),
       ["SENTINEL_HINT_中"]
