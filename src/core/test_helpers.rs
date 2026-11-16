@@ -189,7 +189,7 @@ pub fn app_with_playbar(position: &str) -> App {
 }
 
 /// A Spotify track playing on another device, its album art at `image_url`.
-#[cfg(feature = "gui")]
+#[cfg(any(feature = "gui", feature = "dj-core"))]
 pub fn playing_with_art(id: &str, image_url: &str) -> rspotify::model::CurrentPlaybackContext {
   use rspotify::model::{
     context::Actions, CurrentlyPlayingType, Device, DeviceType, Image, PlayableItem, RepeatState,

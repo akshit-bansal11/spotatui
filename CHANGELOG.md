@@ -3,6 +3,7 @@
 ## [Unreleased]
 
 ### Added
+- **MCP get_now_playing returns the track URI**: an agent can like or queue the playing track without searching for it by name ([#1033](https://github.com/LargeModGames/spotatui/issues/1033)).
 
 - **A recap of the year in December**: from 1 December the terminal app offers the recap of the whole year once, in the popup that offers the monthly recap. The year popup also counts as that month's, and `enable_monthly_recap_prompt: false` turns both off. `spotatui history recap --period year` makes the same recap on any day.
 - **The recap popup in the desktop app and the browser GUI**: when the monthly recap or the December recap of the year is ready, the GUI now shows it in a dialog with Open, Later and Don't show this again. Before, only the terminal app showed the popup.
