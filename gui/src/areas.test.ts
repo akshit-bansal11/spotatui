@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 import type { PaneKeys } from "./bindings/PaneKeys";
-import { modified, paneKey, shellKey, type ShellKey } from "./areas";
+import {
+  modified,
+  mouseNav,
+  paneKey,
+  shellKey,
+  type ShellKey,
+} from "./areas";
 
 const press = (key: string, patch: Partial<ShellKey> = {}): ShellKey => ({
   key,
@@ -135,5 +141,15 @@ describe("modified", () => {
     expect(modified(keys)).toBe(false);
     for (const key of ["altKey", "ctrlKey", "metaKey", "shiftKey"] as const)
       expect(modified({ ...keys, [key]: true })).toBe(true);
+  });
+});
+
+describe("mouseNav", () => {
+  it("the side buttons step back and forward and the other buttons do nothing", () => {
+    expect(mouseNav(3)).toBe("back");
+    expect(mouseNav(4)).toBe("forward");
+    expect(mouseNav(0)).toBeNull();
+    expect(mouseNav(1)).toBeNull();
+    expect(mouseNav(2)).toBeNull();
   });
 });

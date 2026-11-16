@@ -22,6 +22,7 @@ import type { WindowMode } from "./bindings/WindowMode";
 import {
   MAC,
   modified,
+  mouseNav,
   paneKey,
   shellKey,
   type PaneCommand,
@@ -746,6 +747,25 @@ export function Shell({
     panesShown,
     paneCommand,
   ]);
+
+  // The mouse side buttons step through the page history, like the top bar arrows.
+  // Both events are stopped because browsers differ on which one runs their own Back.
+  useEffect(() => {
+    if (mini || room || overlay) return;
+    const onMouse = (event: MouseEvent) => {
+      const step = mouseNav(event.button);
+      if (!step) return;
+      event.preventDefault();
+      if (event.type !== "mouseup") return;
+      show(step === "back" ? goBack(history) : goForward(history), false);
+    };
+    window.addEventListener("mousedown", onMouse);
+    window.addEventListener("mouseup", onMouse);
+    return () => {
+      window.removeEventListener("mousedown", onMouse);
+      window.removeEventListener("mouseup", onMouse);
+    };
+  }, [history, show, mini, room, overlay]);
 
   // One modal at a time: the recap waits for the announcement channel, an announcement,
   // the Soloist dialogs and the command palette.
