@@ -362,6 +362,7 @@ const GUI_SETTINGS: &[(&str, &str)] = &[
   ("behavior.enable_discord_rpc", "integrations"),
   ("behavior.enable_global_song_count", "integrations"),
   ("behavior.enable_lyrics", "integrations"),
+  ("behavior.enable_announcements", "integrations"),
   ("behavior.default_sort_playlist_tracks", "library"),
   ("behavior.default_sort_saved_albums", "library"),
   ("behavior.default_sort_saved_artists", "library"),
@@ -3320,6 +3321,20 @@ mod tests {
       .any(|row| row["id"] == "behavior.disable_auto_update"
         && row["group"] == "updates"
         && row["value"]["kind"] == "bool"));
+  }
+
+  #[test]
+  fn the_settings_channel_offers_the_remote_announcements_switch() {
+    let (app, _rx) = app();
+
+    let rows = settings(&app);
+    let row = rows
+      .iter()
+      .find(|row| row.id == "behavior.enable_announcements")
+      .unwrap();
+
+    assert_eq!(row.group, "integrations");
+    assert!(matches!(row.value, SettingRowValue::Bool { .. }));
   }
 
   #[cfg(all(feature = "subsonic", feature = "local-files", feature = "youtube"))]
