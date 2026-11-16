@@ -2,7 +2,8 @@ use crate::core::app::{App, RouteId};
 use crate::core::plugin_api::{
   PluginCoverArtFit, PluginLength, PluginScreenContent, PluginWidget, PluginWidgetKind, PopupLine,
 };
-use crate::tui::theme::ThemeExt;
+use crate::core::user_config::BehaviorConfig;
+use crate::tui::theme::{EmphasisExt, ThemeExt};
 use ratatui::{
   layout::{Alignment, Constraint, Layout, Rect},
   style::{Modifier, Style},
@@ -45,7 +46,7 @@ pub fn draw_plugin_screen(f: &mut Frame<'_>, app: &App) {
       title,
       Style::default()
         .fg(app.user_config.theme.header.into())
-        .add_modifier(Modifier::BOLD),
+        .add_modifier(app.user_config.behavior.emphasis(Modifier::BOLD)),
     ));
   let inner = outer.inner(area);
   f.render_widget(outer, area);
@@ -120,7 +121,10 @@ fn draw_widgets(f: &mut Frame<'_>, app: &App, content: &PluginScreenContent, are
   for (widget, chunk) in leaves {
     match &widget.kind {
       PluginWidgetKind::Paragraph { lines, scroll } => {
-        let text: Vec<Line> = lines.iter().map(styled_line).collect();
+        let text: Vec<Line> = lines
+          .iter()
+          .map(|pl| styled_line(pl, &app.user_config.behavior))
+          .collect();
         let offset = if *scroll {
           app.view.plugin_screen_scroll
         } else {
@@ -136,7 +140,7 @@ fn draw_widgets(f: &mut Frame<'_>, app: &App, content: &PluginScreenContent, are
       } => {
         let list_items: Vec<ListItem> = items
           .iter()
-          .map(|pl| ListItem::new(styled_line(pl)))
+          .map(|pl| ListItem::new(styled_line(pl, &app.user_config.behavior)))
           .collect();
         let mut block = Block::default()
           .borders(Borders::ALL)
@@ -150,7 +154,7 @@ fn draw_widgets(f: &mut Frame<'_>, app: &App, content: &PluginScreenContent, are
         let list = List::new(list_items).block(block).highlight_style(
           Style::default()
             .fg(app.user_config.theme.selected.into())
-            .add_modifier(Modifier::BOLD),
+            .add_modifier(app.user_config.behavior.emphasis(Modifier::BOLD)),
         );
         let mut state = ListState::default();
         state.select(selected.filter(|s| *s < items.len()));
@@ -229,16 +233,16 @@ fn draw_cover_art_message(f: &mut Frame<'_>, app: &App, area: Rect, message: &st
   );
 }
 
-fn styled_line(pl: &PopupLine) -> Line<'static> {
+fn styled_line(pl: &PopupLine, behavior: &BehaviorConfig) -> Line<'static> {
   let mut style = Style::default();
   if let Some(fg) = pl.fg {
     style = style.fg(fg.into());
   }
   if pl.bold {
-    style = style.add_modifier(Modifier::BOLD);
+    style = style.add_modifier(behavior.emphasis(Modifier::BOLD));
   }
   if pl.italic {
-    style = style.add_modifier(Modifier::ITALIC);
+    style = style.add_modifier(behavior.emphasis(Modifier::ITALIC));
   }
   Line::from(Span::styled(pl.text.clone(), style))
 }
@@ -580,5 +584,53 @@ mod tests {
       rects(&widgets, Rect::new(0, 0, 40, 20)),
       vec![Rect::new(0, 10, 40, 10)]
     );
+  }
+
+  /// A screen with one list whose single, selected item asks for bold and
+  /// italic. Returns the title cell and the item cell's modifiers.
+  fn emphasis_modifiers(enabled: bool) -> (Modifier, Modifier) {
+    let item = PopupLine {
+      text: "zzz".to_string(),
+      fg: None,
+      bold: true,
+      italic: true,
+    };
+    let content = PluginScreenContent {
+      title: "Demo".to_string(),
+      widgets: vec![PluginWidget::new(PluginWidgetKind::List {
+        title: None,
+        items: vec![item],
+        selected: Some(0),
+      })],
+    };
+    let (_, buffer) = render_with(content, 40, 8, |app| {
+      app.user_config.behavior.enable_text_emphasis = enabled;
+    });
+    let y = (0..8)
+      .find(|y| row_text(&buffer, *y).contains("zzz"))
+      .expect("list item row");
+    let row = row_text(&buffer, y);
+    let x = row.chars().position(|c| c == 'z').unwrap() as u16;
+    (
+      buffer.cell((1, 0)).unwrap().modifier,
+      buffer.cell((x, y)).unwrap().modifier,
+    )
+  }
+
+  #[test]
+  fn plugin_screen_is_not_bold_when_text_emphasis_is_off() {
+    let (title, item) = emphasis_modifiers(false);
+    for m in [title, item] {
+      assert!(!m.contains(Modifier::BOLD));
+      assert!(!m.contains(Modifier::ITALIC));
+    }
+  }
+
+  #[test]
+  fn plugin_screen_stays_bold_when_text_emphasis_is_on() {
+    let (title, item) = emphasis_modifiers(true);
+    assert!(title.contains(Modifier::BOLD));
+    assert!(item.contains(Modifier::BOLD));
+    assert!(item.contains(Modifier::ITALIC));
   }
 }
