@@ -4,6 +4,7 @@ import {
   cyclesTo,
   groupThousands,
   moveText,
+  periodTabStep,
   playable,
   sentence,
 } from "./statsModel";
@@ -22,6 +23,13 @@ describe("statsModel", () => {
     expect(cyclesTo("30d", "all")).toEqual({ forward: false, count: 2 });
     expect(cyclesTo("7d", "30d")).toEqual({ forward: true, count: 1 });
     expect(cyclesTo("30d", "30d")).toEqual({ forward: true, count: 0 });
+  });
+
+  it("steps the period ring with the Left and Right arrows on a tab", () => {
+    expect(periodTabStep("ArrowRight")).toBe(true);
+    expect(periodTabStep("ArrowLeft")).toBe(false);
+    expect(periodTabStep("ArrowUp")).toBeNull();
+    expect(periodTabStep("]")).toBeNull();
   });
 
   it("compares a rank with the all-time rank", () => {

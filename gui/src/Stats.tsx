@@ -1,5 +1,5 @@
 import { EN, type GuiStrings } from "./i18n";
-import { memo, useState, type KeyboardEvent } from "react";
+import { memo, useEffect, useRef, useState, type KeyboardEvent } from "react";
 import type { Action } from "./bindings/Action";
 import type { StatsPayload } from "./bindings/StatsPayload";
 import type { StatsRow } from "./bindings/StatsRow";
@@ -11,6 +11,7 @@ import {
   groupThousands,
   moveText,
   periods,
+  periodTabStep,
   playable,
   sentence,
 } from "./statsModel";
@@ -37,6 +38,14 @@ export const Stats = memo(function Stats({
   const period = stats?.period ?? "30d";
   const tracks = (stats?.top_tracks ?? []).slice(0, SHOWN);
   const cursor = clampCursor(want, tracks.length);
+  const tabs = useRef<HTMLDivElement>(null);
+
+  // The period is server state, so the new tab only exists after a later render.
+  useEffect(() => {
+    const list = tabs.current;
+    if (list?.contains(document.activeElement))
+      list.querySelector<HTMLElement>('[aria-selected="true"]')?.focus();
+  }, [period]);
 
   const pickPeriod = (key: string) => {
     const { forward, count } = cyclesTo(period, key);
@@ -60,6 +69,18 @@ export const Stats = memo(function Stats({
       case "]":
         send({ CycleStatsPeriod: { forward: event.key === "]" } });
         break;
+      case "ArrowLeft":
+      case "ArrowRight": {
+        const forward = periodTabStep(event.key);
+        if (
+          forward === null ||
+          !(event.target instanceof HTMLElement) ||
+          event.target.getAttribute("role") !== "tab"
+        )
+          return;
+        send({ CycleStatsPeriod: { forward } });
+        break;
+      }
       case "e":
         send("GenerateStatsRecap");
         break;
@@ -93,13 +114,14 @@ export const Stats = memo(function Stats({
     >
       <div className="stats-head">
         <h1>{s.stats}</h1>
-        <div role="tablist" aria-label={s.period}>
+        <div ref={tabs} role="tablist" aria-label={s.period}>
           {periods(s).map((entry) => (
             <button
               key={entry.key}
               type="button"
               role="tab"
               aria-selected={entry.key === period}
+              tabIndex={entry.key === period ? 0 : -1}
               onClick={() => pickPeriod(entry.key)}
             >
               {entry.label}
