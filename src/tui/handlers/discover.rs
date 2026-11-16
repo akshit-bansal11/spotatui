@@ -21,6 +21,15 @@ pub fn handler(key: Key, app: &mut App) {
     k if common_key_events::up_event(k, &app.user_config.keys) && count > 0 => {
       app.view.discover_selected_index = (index + count - 1) % count;
     }
+    k if common_key_events::high_event(k) && count > 0 => {
+      app.view.discover_selected_index = 0;
+    }
+    k if common_key_events::middle_event(k) && count > 0 => {
+      app.view.discover_selected_index = (count - 1) / 2;
+    }
+    k if common_key_events::low_event(k) && count > 0 => {
+      app.view.discover_selected_index = count - 1;
+    }
     Key::Enter => {
       if let Some(id) = selected {
         app.apply(Action::Open(OpenTarget::Playlist {
@@ -89,6 +98,34 @@ mod tests {
   }
 
   #[test]
+  fn l_selects_the_last_playlist_across_shelves() {
+    let (mut app, _rx) = app_on_discover();
+
+    handler(Key::Char('L'), &mut app);
+
+    assert_eq!(app.view.discover_selected_index, 2);
+  }
+
+  #[test]
+  fn m_selects_the_middle_playlist() {
+    let (mut app, _rx) = app_on_discover();
+
+    handler(Key::Char('M'), &mut app);
+
+    assert_eq!(app.view.discover_selected_index, 1);
+  }
+
+  #[test]
+  fn h_selects_the_first_playlist() {
+    let (mut app, _rx) = app_on_discover();
+    handler(Key::Char('L'), &mut app);
+
+    handler(Key::Char('H'), &mut app);
+
+    assert_eq!(app.view.discover_selected_index, 0);
+  }
+
+  #[test]
   fn enter_opens_the_selected_playlist_in_the_track_table() {
     let (mut app, _rx) = app_on_discover();
     app.view.discover_selected_index = 1;
@@ -116,6 +153,9 @@ mod tests {
       Key::Enter,
       Key::Char('e'),
       Key::Char('w'),
+      Key::Char('H'),
+      Key::Char('M'),
+      Key::Char('L'),
     ] {
       handler(key, &mut app);
     }
