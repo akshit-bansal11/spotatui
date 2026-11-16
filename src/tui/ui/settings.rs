@@ -284,13 +284,18 @@ fn draw_settings_list(f: &mut Frame<'_>, app: &App, area: Rect, scroll_offset: &
     .collect();
 
   let filtering = !app.view.settings_filter.trim().is_empty();
+  let offered = app
+    .settings_items
+    .iter()
+    .filter(|setting| app.setting_offered(setting))
+    .count();
   let count = if filtering {
     app
       .strings()
       .settings
-      .filtered_count(visible.len(), app.settings_items.len())
+      .filtered_count(visible.len(), offered)
   } else {
-    app.strings().settings.item_count(app.settings_items.len())
+    app.strings().settings.item_count(offered)
   };
   let title = app.strings().settings.category_title(
     app.view.settings_category.localized_name(app.strings()),
@@ -689,6 +694,34 @@ mod tests {
     assert!(rendered.contains("←/→ to try another tab"));
     assert!(rendered.contains("Behavior Settings (0 of "));
     assert!(!rendered.contains("Volume Increment"));
+  }
+
+  fn offered_rows(app: &App) -> usize {
+    app
+      .settings_items
+      .iter()
+      .filter(|setting| app.setting_offered(setting))
+      .count()
+  }
+
+  #[test]
+  fn settings_title_counts_only_the_rows_drawn_without_a_session() {
+    let app = filtered_app("", false);
+    let offered = offered_rows(&app);
+    assert!(offered < app.settings_items.len());
+
+    let title = format!("Behavior Settings ({offered} items)");
+    assert!(rendered(&app).contains(&title));
+  }
+
+  #[test]
+  fn settings_title_filter_total_counts_only_the_rows_drawn() {
+    let app = filtered_app("zzzzzzzz", false);
+    let offered = offered_rows(&app);
+    assert!(offered < app.settings_items.len());
+
+    let total = format!("(0 of {offered}");
+    assert!(rendered(&app).contains(&total));
   }
 
   #[test]
