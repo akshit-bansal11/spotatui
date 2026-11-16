@@ -425,9 +425,7 @@ describe("PlaylistRows", () => {
             el.props.className === "sr-only" &&
             el.props.children === EN.playing_prefix,
         ),
-        icon: inside.some(
-          (el) => el.props.className === "library-row-playing",
-        ),
+        icon: inside.some((el) => el.props.className === "library-row-playing"),
       };
     };
     // "Road trip" sits inside the open folder; "Jam" is a loose playlist.
