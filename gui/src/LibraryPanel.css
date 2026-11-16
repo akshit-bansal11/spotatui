@@ -200,6 +200,12 @@
   color: var(--accent);
 }
 
+.library-row-playing {
+  margin-left: 6px;
+  vertical-align: middle;
+  color: var(--accent);
+}
+
 .library-row:disabled {
   opacity: 1;
 }

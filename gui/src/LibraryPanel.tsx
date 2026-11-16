@@ -84,6 +84,7 @@ export const LibraryPanel = memo(function LibraryPanel({
   artistSort,
   loggedOut = false,
   errorRev = null,
+  playingContext = null,
 }: {
   s?: GuiStrings;
   playlists: SourcePlaylists | null;
@@ -103,6 +104,8 @@ export const LibraryPanel = memo(function LibraryPanel({
   loggedOut?: boolean;
   /** The revision of the live error status; null without one. */
   errorRev?: number | null;
+  /** The URI of the playlist or album that is playing; null when none. */
+  playingContext?: string | null;
 }) {
   const active = source?.active ?? null;
   const spotify = active === "Spotify";
@@ -293,6 +296,7 @@ export const LibraryPanel = memo(function LibraryPanel({
             source={active}
             unmatched={unmatched}
             view={view}
+            playingContext={playingContext}
             open={open}
             send={send}
             expanded={expanded}
@@ -316,6 +320,7 @@ export const LibraryPanel = memo(function LibraryPanel({
                     : s.album
                 }
                 current={view.page === "album" && view.id === album.id}
+                playing={playsFrom(album.uri, playingContext)}
                 onClick={
                   album.id
                     ? () => open({ page: "album", id: album.id ?? "" })
@@ -566,6 +571,7 @@ export const PlaylistRows = memo(function PlaylistRows({
   expanded,
   onToggle,
   onMenu,
+  playingContext = null,
 }: {
   s?: GuiStrings;
   needle?: string;
@@ -579,6 +585,8 @@ export const PlaylistRows = memo(function PlaylistRows({
   expanded: ReadonlySet<string>;
   onToggle: (uri: string) => void;
   onMenu: OpenMenu;
+  /** The URI of the playlist or album that is playing; null when none. */
+  playingContext?: string | null;
 }) {
   const filtering = needle.trim() !== "";
   const tree =
@@ -640,6 +648,7 @@ export const PlaylistRows = memo(function PlaylistRows({
             : fmt(s.playlist_count, { count: songCount(row.count, s) })
       }
       current={view.page === "playlist" && view.uri === row.uri}
+      playing={playsFrom(row.uri, playingContext)}
       depth={depth}
       onClick={() => pick(row)}
       onMenu={
@@ -767,6 +776,14 @@ function FolderRow({
   );
 }
 
+/** Whether a row's URI is the context that is playing; a missing URI never is. */
+export function playsFrom(
+  uri: string | null,
+  playingContext: string | null | undefined,
+): boolean {
+  return uri !== null && uri === playingContext;
+}
+
 /** One compact row: the cover, the name and a gray subline. */
 function Row({
   s = EN,
@@ -774,6 +791,7 @@ function Row({
   title,
   subline,
   current,
+  playing = false,
   depth = 0,
   onClick,
   onMenu,
@@ -783,6 +801,8 @@ function Row({
   title: string;
   subline: ReactNode;
   current: boolean;
+  /** The row's playlist or album is the one playing. */
+  playing?: boolean;
   depth?: number;
   /** Absent, the row cannot open anything. */
   onClick?: () => void;
@@ -827,7 +847,15 @@ function Row({
     >
       {cover}
       <span className="library-row-text">
-        <span className="library-row-title">{title}</span>
+        <span className="library-row-title">
+          {playing && <span className="sr-only">{s.playing_prefix}</span>}
+          {title}
+          {playing && (
+            <span className="library-row-playing" aria-hidden="true">
+              <Glyph name="volume" size={16} />
+            </span>
+          )}
+        </span>
         <span className="library-row-sub">{subline}</span>
       </span>
       {onMenu && (

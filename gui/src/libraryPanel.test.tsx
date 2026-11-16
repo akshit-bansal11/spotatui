@@ -7,6 +7,7 @@ import type { Source } from "./bindings/Source";
 import type { SourcePlaylists } from "./bindings/SourcePlaylists";
 import {
   LibraryPanel,
+  playsFrom,
   SourceSelect,
   PlaylistRemovalDialog,
   PlaylistRows,
@@ -103,6 +104,7 @@ const rows = (
     playlists?: SourcePlaylists;
     needle?: string;
     s?: typeof EN;
+    playingContext?: string | null;
   } = {},
 ) => {
   const open = vi.fn();
@@ -122,6 +124,7 @@ const rows = (
       onMenu={onMenu}
       needle={options.needle}
       s={options.s}
+      playingContext={options.playingContext}
     />
   );
   return { tree, open, send, onToggle, onMenu };
@@ -407,6 +410,46 @@ describe("PlaylistRows", () => {
       "Lieblingssongs",
     ]);
     expect(titles(rows("Local", { needle: "liked", s }).tree)).toEqual([]);
+  });
+
+  it("marks the playlist that is playing", () => {
+    const { tree } = rows("Spotify", {
+      expanded: ["spotify:user:me:folder:moods"],
+      playingContext: "spotify:playlist:mine",
+    });
+    const marks = (title: string) => {
+      const inside = hostElements(titled(tree, title).props.children);
+      return {
+        prefix: inside.some(
+          (el) =>
+            el.props.className === "sr-only" &&
+            el.props.children === EN.playing_prefix,
+        ),
+        icon: inside.some(
+          (el) => el.props.className === "library-row-playing",
+        ),
+      };
+    };
+    // "Road trip" sits inside the open folder; "Jam" is a loose playlist.
+    expect(marks("Road trip")).toEqual({ prefix: true, icon: true });
+    expect(marks("Jam")).toEqual({ prefix: false, icon: false });
+  });
+
+  it("marks no playlist when nothing from the library is playing", () => {
+    for (const playingContext of [null, "spotify:web-api:radio"]) {
+      const { tree } = rows("Spotify", { playingContext });
+      const classes = hostElements(tree).map((el) => el.props.className);
+      expect(classes).not.toContain("library-row-playing");
+    }
+  });
+});
+
+describe("playsFrom", () => {
+  it("marks the album that is playing", () => {
+    expect(playsFrom("spotify:album:a", "spotify:album:a")).toBe(true);
+    expect(playsFrom("spotify:album:a", "spotify:album:b")).toBe(false);
+    expect(playsFrom(null, null)).toBe(false);
+    expect(playsFrom(null, undefined)).toBe(false);
   });
 });
 

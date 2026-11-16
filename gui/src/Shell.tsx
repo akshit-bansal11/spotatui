@@ -963,6 +963,7 @@ export function Shell({
         source={channels.source?.payload ?? null}
         sync={channels.playlist_sync?.payload ?? null}
         loggedOut={channels.liked?.payload.available === false}
+        playingContext={item?.context_uri ?? null}
         errorRev={statusError ? statusRev : null}
         view={view}
         open={open}
