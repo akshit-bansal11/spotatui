@@ -789,6 +789,22 @@ mod tests {
   use super::*;
 
   #[test]
+  fn every_theme_preset_round_trips_through_its_config_name() {
+    let mut names = std::collections::HashSet::new();
+    for preset in ThemePreset::all() {
+      assert_eq!(
+        ThemePreset::from_name(preset.name()),
+        *preset,
+        "preset {preset:?} does not round-trip through its name"
+      );
+      assert!(
+        names.insert(preset.name()),
+        "preset {preset:?} shares its name with another preset"
+      );
+    }
+  }
+
+  #[test]
   fn parse_theme_item_test() {
     assert_eq!(parse_theme_item("Reset").unwrap(), Color::Reset);
     assert_eq!(parse_theme_item("Black").unwrap(), Color::Black);
