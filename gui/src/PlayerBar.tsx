@@ -1,4 +1,4 @@
-import { EN, type GuiStrings } from "./i18n";
+import { EN, type GuiStrings, fmt } from "./i18n";
 import { useCallback, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import type { WindowEdge } from "./bindings/WindowEdge";
@@ -179,6 +179,7 @@ export function PlayerBar({
             type="button"
             className="like"
             aria-label={s.like}
+            title={s.like}
             aria-pressed={liked}
             disabled={!connected}
             onClick={() => send("ToggleSaveCurrentItem")}
@@ -205,6 +206,7 @@ export function PlayerBar({
           type="button"
           className="icon-button"
           aria-label={s.now_playing_view}
+          title={s.now_playing_view}
           aria-pressed={panels.includes("now_playing")}
           onClick={() => onPanel("now_playing")}
         >
@@ -214,6 +216,7 @@ export function PlayerBar({
           type="button"
           className="icon-button"
           aria-label={s.lyrics}
+          title={fmt(s.label_shortcut, { label: s.lyrics, key: "l" })}
           aria-keyshortcuts="l"
           aria-pressed={lyricsOpen}
           onClick={onLyrics}
@@ -224,6 +227,7 @@ export function PlayerBar({
           type="button"
           className="icon-button"
           aria-label={s.queue}
+          title={fmt(s.label_shortcut, { label: s.queue, key: "Shift+Q" })}
           aria-keyshortcuts="Shift+Q"
           aria-pressed={panels.includes("queue")}
           onClick={() => onPanel("queue")}
@@ -235,6 +239,7 @@ export function PlayerBar({
             type="button"
             className="icon-button"
             aria-label={s.connect_device}
+            title={s.connect_device}
             aria-haspopup="dialog"
             aria-expanded={devicesOpen}
             disabled={!connected}
@@ -256,6 +261,7 @@ export function PlayerBar({
           type="button"
           className="icon-button"
           aria-label={volume === 0 ? s.unmute : s.mute}
+          title={volume === 0 ? s.unmute : s.mute}
           disabled={!connected}
           onClick={() => {
             if (volume === 0) {
@@ -281,6 +287,10 @@ export function PlayerBar({
           type="button"
           className="icon-button"
           aria-label={s.open_mini_player}
+          title={fmt(s.label_shortcut, {
+            label: s.open_mini_player,
+            key: "Shift+T",
+          })}
           data-mini-toggle
           aria-keyshortcuts="Shift+T"
           onClick={() => onMini()}
@@ -291,6 +301,7 @@ export function PlayerBar({
           type="button"
           className="icon-button"
           aria-label={s.full_screen}
+          title={fmt(s.label_shortcut, { label: s.full_screen, key: "r" })}
           aria-keyshortcuts="r"
           onClick={() => onRoom()}
         >
