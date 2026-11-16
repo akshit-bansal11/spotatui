@@ -290,63 +290,7 @@ impl UtilsNetwork for Network {
       Err(_) => return,
     };
 
-    let now = Utc::now();
-    let mut feed_ids_seen = HashSet::new();
-    let mut announcements = Vec::new();
-
-    for record in feed.announcements {
-      let id = record.id.trim().to_string();
-      if id.is_empty() || !feed_ids_seen.insert(id.clone()) {
-        continue;
-      }
-
-      let body = record.body.trim().to_string();
-      if body.is_empty() {
-        continue;
-      }
-
-      let starts_at = match record.starts_at.as_deref().map(parse_announcement_datetime) {
-        Some(Some(value)) => Some(value),
-        Some(None) => continue,
-        None => None,
-      };
-
-      let ends_at = match record.ends_at.as_deref().map(parse_announcement_datetime) {
-        Some(Some(value)) => Some(value),
-        Some(None) => continue,
-        None => None,
-      };
-
-      if let Some(start) = starts_at {
-        if now < start {
-          continue;
-        }
-      }
-
-      if let Some(end) = ends_at {
-        if now > end {
-          continue;
-        }
-      }
-
-      let url = record
-        .url
-        .map(|url| url.trim().to_string())
-        .filter(|url| !url.is_empty() && url.starts_with("https://"));
-
-      announcements.push(Announcement {
-        id,
-        title: record
-          .title
-          .map(|title| title.trim().to_string())
-          .filter(|title| !title.is_empty())
-          .unwrap_or_else(|| "Announcement".to_string()),
-        body,
-        level: parse_announcement_level(record.level.as_deref()),
-        url,
-        received_at: Instant::now(),
-      });
-    }
+    let announcements = announcements_from_feed(feed, Utc::now());
 
     self
       .app
@@ -592,13 +536,80 @@ fn parse_announcement_level(level: Option<&str>) -> AnnouncementLevel {
   }
 }
 
+/// Applies the feed rules to the parsed announcements: the user sees a record only when
+/// it has an id, a body and valid dates, and `now` lies inside its window.
+fn announcements_from_feed(
+  feed: AnnouncementFeedResponse,
+  now: DateTime<Utc>,
+) -> Vec<Announcement> {
+  let mut feed_ids_seen = HashSet::new();
+  let mut announcements = Vec::new();
+
+  for record in feed.announcements {
+    let id = record.id.trim().to_string();
+    if id.is_empty() || !feed_ids_seen.insert(id.clone()) {
+      continue;
+    }
+
+    let body = record.body.trim().to_string();
+    if body.is_empty() {
+      continue;
+    }
+
+    let starts_at = match record.starts_at.as_deref().map(parse_announcement_datetime) {
+      Some(Some(value)) => Some(value),
+      Some(None) => continue,
+      None => None,
+    };
+
+    let ends_at = match record.ends_at.as_deref().map(parse_announcement_datetime) {
+      Some(Some(value)) => Some(value),
+      Some(None) => continue,
+      None => None,
+    };
+
+    if let Some(start) = starts_at {
+      if now < start {
+        continue;
+      }
+    }
+
+    if let Some(end) = ends_at {
+      if now > end {
+        continue;
+      }
+    }
+
+    let url = record
+      .url
+      .map(|url| url.trim().to_string())
+      .filter(|url| !url.is_empty() && url.starts_with("https://"));
+
+    announcements.push(Announcement {
+      id,
+      title: record
+        .title
+        .map(|title| title.trim().to_string())
+        .filter(|title| !title.is_empty())
+        .unwrap_or_else(|| "Announcement".to_string()),
+      body,
+      level: parse_announcement_level(record.level.as_deref()),
+      url,
+      received_at: Instant::now(),
+    });
+  }
+  announcements
+}
+
 #[cfg(test)]
 mod tests {
   use super::{
-    apply_lyrics_response, artist_query_candidates, parse_synced_lyrics, pick_search_result,
-    synthesize_plain_lyrics, LrcResponse,
+    announcements_from_feed, apply_lyrics_response, artist_query_candidates,
+    parse_announcement_datetime, parse_synced_lyrics, pick_search_result, synthesize_plain_lyrics,
+    AnnouncementFeedResponse, LrcResponse,
   };
-  use crate::core::app::{App, DisplayDomain, LyricsStatus};
+  use crate::core::app::{Announcement, AnnouncementLevel, App, DisplayDomain, LyricsStatus};
+  use chrono::{DateTime, Utc};
 
   #[test]
   fn artist_candidates_single_artist_has_no_fallback() {
@@ -929,5 +940,127 @@ mod tests {
         (13_000u128, "[00:xx] more".to_string()),
       ]
     );
+  }
+
+  fn feed(json: &str) -> AnnouncementFeedResponse {
+    serde_json::from_str(json).unwrap()
+  }
+
+  fn now() -> DateTime<Utc> {
+    parse_announcement_datetime("2026-06-01T12:00:00Z").unwrap()
+  }
+
+  fn shown(json: &str) -> Vec<Announcement> {
+    announcements_from_feed(feed(json), now())
+  }
+
+  fn shown_ids(json: &str) -> Vec<String> {
+    shown(json).into_iter().map(|a| a.id).collect()
+  }
+
+  #[test]
+  fn feed_skips_blank_and_duplicate_ids() {
+    let json = r#"{"announcements":[
+      {"id":"  ","body":"blank id"},
+      {"id":"a","body":"first"},
+      {"id":" a ","body":"same id after trimming"},
+      {"id":"b","body":"second"}
+    ]}"#;
+    assert_eq!(shown_ids(json), vec!["a", "b"]);
+  }
+
+  #[test]
+  fn feed_skips_a_record_with_a_blank_body() {
+    let json = r#"{"announcements":[
+      {"id":"a","body":"   "},
+      {"id":"b","body":"  text  "}
+    ]}"#;
+    let list = shown(json);
+    assert_eq!(list.len(), 1);
+    assert_eq!(list[0].id, "b");
+    assert_eq!(list[0].body, "text");
+  }
+
+  #[test]
+  fn feed_drops_a_record_with_an_unparseable_date() {
+    let json = r#"{"announcements":[
+      {"id":"bad-start","body":"x","starts_at":"tomorrow"},
+      {"id":"bad-end","body":"x","ends_at":"2026-13-45T00:00:00Z"},
+      {"id":"ok","body":"x"}
+    ]}"#;
+    assert_eq!(shown_ids(json), vec!["ok"]);
+  }
+
+  #[test]
+  fn feed_keeps_only_records_inside_their_time_window() {
+    let json = r#"{"announcements":[
+      {"id":"not-yet","body":"x","starts_at":"2026-06-01T12:00:01Z"},
+      {"id":"over","body":"x","ends_at":"2026-06-01T11:59:59Z"},
+      {"id":"starts-now","body":"x","starts_at":"2026-06-01T12:00:00Z"},
+      {"id":"ends-now","body":"x","ends_at":"2026-06-01T12:00:00Z"},
+      {"id":"inside","body":"x","starts_at":"2026-05-01T00:00:00Z",
+        "ends_at":"2026-07-01T00:00:00Z"},
+      {"id":"no-limit","body":"x"}
+    ]}"#;
+    assert_eq!(
+      shown_ids(json),
+      vec!["starts-now", "ends-now", "inside", "no-limit"]
+    );
+  }
+
+  #[test]
+  fn feed_drops_a_url_that_is_not_https() {
+    let json = r#"{"announcements":[
+      {"id":"http","body":"x","url":"http://example.com"},
+      {"id":"blank","body":"x","url":"  "},
+      {"id":"none","body":"x"},
+      {"id":"https","body":"x","url":" https://example.com/a "}
+    ]}"#;
+    let urls: Vec<Option<String>> = shown(json).into_iter().map(|a| a.url).collect();
+    assert_eq!(
+      urls,
+      vec![
+        None,
+        None,
+        None,
+        Some("https://example.com/a".to_string()),
+      ]
+    );
+  }
+
+  #[test]
+  fn feed_gives_a_missing_title_the_default_title() {
+    let json = r#"{"announcements":[
+      {"id":"missing","body":"x"},
+      {"id":"blank","body":"x","title":"  "},
+      {"id":"set","body":"x","title":" Hello "}
+    ]}"#;
+    let titles: Vec<String> = shown(json).into_iter().map(|a| a.title).collect();
+    assert_eq!(titles, vec!["Announcement", "Announcement", "Hello"]);
+  }
+
+  #[test]
+  fn feed_reads_the_level_ignoring_case_and_whitespace() {
+    let json = r#"{"announcements":[
+      {"id":"a","body":"x","level":" CRITICAL "},
+      {"id":"b","body":"x","level":"Warning"},
+      {"id":"c","body":"x","level":"urgent"},
+      {"id":"d","body":"x"}
+    ]}"#;
+    let levels: Vec<AnnouncementLevel> = shown(json).into_iter().map(|a| a.level).collect();
+    assert_eq!(
+      levels,
+      vec![
+        AnnouncementLevel::Critical,
+        AnnouncementLevel::Warning,
+        AnnouncementLevel::Info,
+        AnnouncementLevel::Info,
+      ]
+    );
+  }
+
+  #[test]
+  fn feed_with_no_announcements_shows_nothing() {
+    assert!(shown("{}").is_empty());
   }
 }
