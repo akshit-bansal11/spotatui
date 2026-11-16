@@ -337,3 +337,8 @@ body.pane-dragging * {
 .topbar[data-edge="right"] .top-search:focus-within {
   right: 0;
 }
+
+/* Room in the visualizer bar for the detach button: 16px edge + 32px button + 12px gap. */
+.screen:has(> .pane-detach) .viz-screen-bar {
+  padding-right: 60px;
+}
