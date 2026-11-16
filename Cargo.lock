@@ -5910,7 +5910,6 @@ dependencies = [
  "spotatui-librespot-playback",
  "spotatui-librespot-protocol",
  "stream-download",
- "symphonia",
  "tempfile",
  "tokio",
  "tokio-rustls",
