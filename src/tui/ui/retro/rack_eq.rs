@@ -85,7 +85,7 @@ fn bands_that_fit(window_width: i32, step: i32) -> usize {
 /// Band shown in slot `k` of `n`: all of them, or an even pick from the ten
 /// that keeps the lowest and highest.
 fn shown_band(k: usize, n: usize) -> usize {
-  if n >= BANDS || n < 2 {
+  if !(2..BANDS).contains(&n) {
     k
   } else {
     (k * (BANDS - 1) + (n - 1) / 2) / (n - 1)
