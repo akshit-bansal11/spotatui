@@ -105,6 +105,7 @@ pub(crate) fn setting_requirement(id: &str) -> Requirement {
     | "behavior.pin_community_playlist"
     | "behavior.liked_icon"
     | "behavior.episode_played_icon"
+    | "behavior.stop_after_current_track"
     | "behavior.enable_streaming"
     | "behavior.streaming_device_name"
     | "behavior.streaming_bitrate"
@@ -1688,6 +1689,16 @@ mod tests {
     app.load_settings_for_category();
     app.spotify_connected = true;
     assert!(offered(&app, "behavior.default_sort_saved_albums"));
+  }
+
+  #[test]
+  fn without_a_session_the_stop_after_current_track_row_is_hidden() {
+    let mut app = App::default();
+    app.load_settings_for_category();
+    assert!(!offered(&app, "behavior.stop_after_current_track"));
+
+    app.spotify_connected = true;
+    assert!(offered(&app, "behavior.stop_after_current_track"));
   }
 
   #[test]
