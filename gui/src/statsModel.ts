@@ -29,6 +29,10 @@ export function cyclesTo(
     : { forward: false, count: size - ahead };
 }
 
+/** Which way an arrow key steps the period tabs: `true` forward, `false` back, `null` for any other key. */
+export const periodTabStep = (key: string): boolean | null =>
+  key === "ArrowRight" ? true : key === "ArrowLeft" ? false : null;
+
 export type Tone = "up" | "down" | "same";
 
 /** An artist's place against its all-time rank. `rank` is 1-based within the period. */

@@ -46,6 +46,17 @@ describe("Stats", () => {
     expect(html).toMatch(/aria-selected="true"[^>]*>30 days</);
   });
 
+  it("lets only the selected period tab take Tab focus", () => {
+    const html = render(loaded);
+    const tabs = html.match(/<button[^>]*role="tab"[^>]*>/g) ?? [];
+    expect(tabs).toHaveLength(5);
+    const stops = (value: string) =>
+      tabs.filter((tab) => tab.includes(`tabindex="${value}"`));
+    expect(stops("0")).toHaveLength(1);
+    expect(stops("-1")).toHaveLength(4);
+    expect(html).toMatch(/aria-selected="true" tabindex="0">30 days</);
+  });
+
   it("compares each artist with its all-time rank and writes the movement", () => {
     const html = render(loaded);
     expect(html).toContain('class="move same">=<');
