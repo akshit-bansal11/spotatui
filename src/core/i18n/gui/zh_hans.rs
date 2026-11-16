@@ -44,6 +44,7 @@ pub const ZH_HANS: GuiStrings = GuiStrings {
   nothing_playing: "暂无播放",
   nothing_is_playing: "暂无播放。",
   nothing_queued: "队列为空。",
+  clear_queue: "清空",
   now_playing: "正在播放",
   now_playing_view: "正在播放视图",
   close_now_playing: "关闭正在播放视图",

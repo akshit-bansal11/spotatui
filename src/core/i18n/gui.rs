@@ -52,6 +52,7 @@ pub struct GuiStrings {
   pub change_visualizer: &'static str,
   pub nothing_is_playing: &'static str,
   pub nothing_queued: &'static str,
+  pub clear_queue: &'static str,
   pub now_playing: &'static str,
   pub now_playing_view: &'static str,
   pub close_now_playing: &'static str,

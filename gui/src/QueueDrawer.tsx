@@ -105,7 +105,18 @@ export function QueueDrawer({
         ) : (
           <p className="panel-empty">{s.nothing_is_playing}</p>
         )}
-        <h3>{s.next_in_queue}</h3>
+        <div className="queue-heading">
+          <h3>{s.next_in_queue}</h3>
+          {native.length > 0 && (
+            <button
+              type="button"
+              className="queue-clear"
+              onClick={() => send("ClearQueue")}
+            >
+              {s.clear_queue}
+            </button>
+          )}
+        </div>
         {native.length === 0 ? (
           <p className="panel-empty">{s.nothing_queued}</p>
         ) : (
