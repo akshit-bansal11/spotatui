@@ -16,19 +16,16 @@ const TEXT: (u8, u8, u8) = (200, 180, 140);
 const MUTED: (u8, u8, u8) = (150, 130, 100);
 /// Reel speed while playing, degrees per second.
 const DEGREES_PER_SEC: f32 = 150.0;
+/// Shell rows under which the label strip no longer fits.
+const MIN_SHELL_ROWS: i32 = 6;
+/// Shell rows from which the tape window (3 rows or more) fits inside it.
+const MIN_WINDOW_SHELL_ROWS: i32 = 10;
 
 pub fn draw(cells: &mut Cells, frame: &Frame, state: &mut State, dt: f32) {
   let (w, h) = (cells.width(), cells.height());
   let view = frame.view;
   cells.fill(0, 0, w, h, BODY);
-  cells.put(
-    3,
-    1,
-    "AUTO REVERSE  ·  DOLBY B NR  ·  CrO₂",
-    TEXT,
-    None,
-    false,
-  );
+  cells.put(3, 1, header_text(w), TEXT, None, false);
   cells.put(w - 18, 1, "TAPE COUNTER", MUTED, None, false);
   let count = view.progress_ms.map_or(0, |ms| (ms / 1000) % 10_000);
   let digits: String = format!("{count:04}")
@@ -44,9 +41,17 @@ pub fn draw(cells: &mut Cells, frame: &Frame, state: &mut State, dt: f32) {
     true,
   );
 
-  // The cassette, kept above the meter rows (they start at `h - 8`).
+  // The cassette, kept above the meter rows (they start at `h - 8`); a pane too
+  // short for it shows the meters alone.
+  if let Some(wh) = shell_height(h) {
+    draw_cassette(cells, frame, state, dt, wh);
+  }
+  draw_meters(cells, frame);
+}
+
+fn draw_cassette(cells: &mut Cells, frame: &Frame, state: &mut State, dt: f32, wh: i32) {
+  let (w, view) = (cells.width(), frame.view);
   let ww = (w * 69 / 100).max(20);
-  let wh = shell_height(h);
   let (wx, wy) = ((w - ww) / 2, 4);
   cells.fill(wx, wy, ww, wh, SHELL);
   cells.fill(wx + 2, wy + 1, ww - 4, 3, LABEL_STRIP);
@@ -59,7 +64,10 @@ pub fn draw(cells: &mut Cells, frame: &Frame, state: &mut State, dt: f32) {
     Some(LABEL_STRIP),
     true,
   );
-  let (rx0, ry0, rw, rh) = (wx + 10, wy + 5, ww - 20, (wh - 7).max(3));
+  if wh < MIN_WINDOW_SHELL_ROWS {
+    return;
+  }
+  let (rx0, ry0, rw, rh) = (wx + 10, wy + 5, ww - 20, wh - 7);
   cells.fill(rx0, ry0, rw, rh, WINDOW);
 
   let progress = match (view.progress_ms, view.duration_ms) {
@@ -101,8 +109,10 @@ pub fn draw(cells: &mut Cells, frame: &Frame, state: &mut State, dt: f32) {
   }
   dots.line(cw * 0.22, ch - 1.0, cw * 0.78, ch - 1.0, TAPE);
   cells.dots(&dots, rx0, ry0);
+}
 
-  // LED level bars.
+fn draw_meters(cells: &mut Cells, frame: &Frame) {
+  let (w, h, view) = (cells.width(), cells.height(), frame.view);
   let (l, r) = frame.audio.levels();
   let leds = ((w - 16) / 2).clamp(8, 40);
   for (i, (label, level)) in [("L", l), ("R", r)].into_iter().enumerate() {
@@ -147,9 +157,22 @@ pub fn draw(cells: &mut Cells, frame: &Frame, state: &mut State, dt: f32) {
 }
 
 /// Rows the cassette shell takes: half the area, but ending above the meter
-/// rows (from `h - 8`) and never under 6.
-fn shell_height(h: i32) -> i32 {
-  (h / 2).min(h - 13).max(6)
+/// rows (from `h - 8`). `None` when that leaves under 6 rows: no room for the
+/// label strip.
+fn shell_height(h: i32) -> Option<i32> {
+  let rows = (h / 2).min(h - 13);
+  (rows >= MIN_SHELL_ROWS).then_some(rows)
+}
+
+/// The header line that leaves two columns before "TAPE COUNTER" (at `w - 18`).
+fn header_text(w: i32) -> &'static str {
+  const FULL: &str = "AUTO REVERSE  ·  DOLBY B NR  ·  CrO₂";
+  const SHORT: &str = "AUTO REVERSE  ·  DOLBY B NR";
+  const MIN: &str = "AUTO REVERSE";
+  [FULL, SHORT, MIN]
+    .into_iter()
+    .find(|t| 3 + t.chars().count() as i32 + 2 <= w - 18)
+    .unwrap_or("")
 }
 
 /// Turns each reel by its own speed (the smaller pack turns faster, as on a
@@ -237,6 +260,72 @@ mod tests {
         }
       }
     }
+  }
+
+  fn render(w: u16, h: u16) -> Buffer {
+    let bands = sample_bands(24);
+    let wave = sample_wave();
+    let view = HeadUnitView {
+      title: Some("Side A".into()),
+      is_playing: true,
+      ..HeadUnitView::default()
+    };
+    let area = Rect::new(0, 0, w, h);
+    let mut buf = Buffer::empty(area);
+    let frame = Frame {
+      audio: Audio {
+        bands: &bands,
+        wave: &wave,
+      },
+      view: &view,
+      now: Instant::now(),
+    };
+    let mut cells = Cells {
+      buf: &mut buf,
+      area,
+    };
+    draw(&mut cells, &frame, &mut State::default(), 0.0);
+    buf
+  }
+
+  #[test]
+  fn a_small_pane_shows_no_cassette_over_the_meters() {
+    let (w, h) = (58u16, 15u16);
+    let buf = render(w, h);
+    let body = Color::Rgb(BODY.0, BODY.1, BODY.2);
+    for y in 3..(h - 8) {
+      for x in 0..w {
+        assert_eq!(buf[(x, y)].bg, body, "cassette cell at ({x}, {y})");
+      }
+    }
+    for y in (h - 8)..h {
+      for x in 0..w {
+        let bg = buf[(x, y)].bg;
+        assert_ne!(bg, Color::Rgb(SHELL.0, SHELL.1, SHELL.2));
+        assert_ne!(bg, Color::Rgb(WINDOW.0, WINDOW.1, WINDOW.2));
+      }
+    }
+  }
+
+  #[test]
+  fn the_header_keeps_two_columns_before_the_tape_counter() {
+    assert_eq!(header_text(58), "AUTO REVERSE  ·  DOLBY B NR");
+    assert!(header_text(80).ends_with("CrO₂"));
+    for w in 0..120 {
+      let len = header_text(w).chars().count() as i32;
+      assert!(len == 0 || 3 + len + 2 <= w - 18, "width {w}");
+    }
+  }
+
+  #[test]
+  fn tiny_areas_draw_without_panicking() {
+    for w in 0..=3u16 {
+      for h in 0..=3u16 {
+        render(w, h);
+      }
+    }
+    render(58, 15);
+    render(20, 40);
   }
 
   #[test]
