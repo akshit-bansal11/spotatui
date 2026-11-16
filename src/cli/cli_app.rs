@@ -280,11 +280,6 @@ impl CliApp {
   }
 
   pub async fn seek(&mut self, seconds_str: String) -> Result<()> {
-    let seconds = match seconds_str.parse::<i32>() {
-      Ok(s) => s.unsigned_abs(),
-      Err(_) => return Err(anyhow!("failed to convert seconds to i32")),
-    };
-
     let (current_pos, duration) = {
       self
         .net
@@ -309,20 +304,8 @@ impl CliApp {
       }
     };
 
-    // Convert secs to ms
-    let ms = seconds * 1000;
-    // Calculate new positon
-    let position_to_seek = if seconds_str.starts_with('+') {
-      current_pos + ms
-    } else if seconds_str.starts_with('-') {
-      // Jump to the beginning if the position_to_seek would be
-      // negative, must be checked before the calculation to avoid
-      // an 'underflow'
-      current_pos.saturating_sub(ms)
-    } else {
-      // Absolute value of the track
-      seconds * 1000
-    };
+    let position_to_seek = seek_target(&seconds_str, current_pos)
+      .ok_or_else(|| anyhow!("expected whole seconds, for example +10, -10 or 10"))?;
 
     // Check if position_to_seek is greater than duration (next track)
     if position_to_seek > duration {
@@ -833,15 +816,46 @@ fn playable_format_type(item: PlayableInfo) -> FormatType {
   }
 }
 
+/// The position in ms that `--seek` asks for: `+N` forwards and `-N` backwards from
+/// `current_pos`, `N` absolute. Saturates instead of overflowing; a position past the
+/// track end makes the caller skip to the next track. `None` when not whole seconds.
+fn seek_target(seconds_str: &str, current_pos: u32) -> Option<u32> {
+  let ms = seconds_str
+    .parse::<i32>()
+    .ok()?
+    .unsigned_abs()
+    .saturating_mul(1000);
+  Some(if seconds_str.starts_with('+') {
+    current_pos.saturating_add(ms)
+  } else if seconds_str.starts_with('-') {
+    current_pos.saturating_sub(ms)
+  } else {
+    ms
+  })
+}
+
 #[cfg(test)]
 mod tests {
   use super::{
     device_id_by_name, first_result_uri, parse_query_limit, parse_track_limit,
-    playable_format_type, playlist_items_total, random_offset, SearchResult, Type,
+    playable_format_type, playlist_items_total, random_offset, seek_target, SearchResult, Type,
   };
   use crate::cli::util::{render_format, Format};
   use crate::core::plugin_api::{EpisodeInfo, PlayableInfo};
   use crate::core::user_config::UserConfig;
+
+  #[test]
+  fn seek_target_saturates_instead_of_overflowing() {
+    assert_eq!(seek_target("4294968", 5_000), Some(u32::MAX));
+    assert_eq!(seek_target("+4294968", 5_000), Some(u32::MAX));
+    assert_eq!(seek_target("+2147483647", u32::MAX), Some(u32::MAX));
+    assert_eq!(seek_target("-2147483648", 5_000), Some(0));
+    assert_eq!(seek_target("+10", 5_000), Some(15_000));
+    assert_eq!(seek_target("-10", 25_000), Some(15_000));
+    assert_eq!(seek_target("-10", 5_000), Some(0));
+    assert_eq!(seek_target("10", 5_000), Some(10_000));
+    assert_eq!(seek_target("ten", 5_000), None);
+  }
 
   #[test]
   fn a_track_limit_has_no_page_ceiling() {
