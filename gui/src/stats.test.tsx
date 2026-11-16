@@ -48,8 +48,12 @@ describe("Stats", () => {
 
   it("lets only the selected period tab take Tab focus", () => {
     const html = render(loaded);
-    expect(html.match(/tabindex="0"/g)).toHaveLength(1);
-    expect(html.match(/tabindex="-1"/g)).toHaveLength(4);
+    const tabs = html.match(/<button[^>]*role="tab"[^>]*>/g) ?? [];
+    expect(tabs).toHaveLength(5);
+    const stops = (value: string) =>
+      tabs.filter((tab) => tab.includes(`tabindex="${value}"`));
+    expect(stops("0")).toHaveLength(1);
+    expect(stops("-1")).toHaveLength(4);
     expect(html).toMatch(/aria-selected="true" tabindex="0">30 days</);
   });
 
