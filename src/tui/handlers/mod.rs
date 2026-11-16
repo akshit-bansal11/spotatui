@@ -1441,13 +1441,28 @@ mod tests {
     assert_eq!(app.status_message(), Some("Nothing is playing"));
 
     // A Spotify track playing under the Local scope still copies; with no
-    // clipboard in a test App the copy exits without a message.
+    // clipboard in a test App the copy says the clipboard is not available.
     let mut app = App::default_connected()
       .under_source(Source::Local)
       .with_playback(spotify_track_context());
     app.set_current_route_state(Some(ActiveBlock::Empty), Some(ActiveBlock::Library));
     handle_app(app.user_config.keys.copy_album_url, &mut app);
-    assert_eq!(app.status_message(), None);
+    assert_eq!(app.status_message(), Some("Clipboard not available"));
+  }
+
+  #[test]
+  fn copy_url_keys_without_a_clipboard_say_the_clipboard_is_not_available() {
+    let mut app = App::default_connected()
+      .under_source(Source::Local)
+      .with_playback(spotify_track_context());
+    app.set_current_route_state(Some(ActiveBlock::Empty), Some(ActiveBlock::Library));
+
+    handle_app(app.user_config.keys.copy_song_url, &mut app);
+    assert_eq!(app.status_message(), Some("Clipboard not available"));
+
+    app.set_status_message("cleared", 1);
+    handle_app(app.user_config.keys.copy_album_url, &mut app);
+    assert_eq!(app.status_message(), Some("Clipboard not available"));
   }
 
   #[test]

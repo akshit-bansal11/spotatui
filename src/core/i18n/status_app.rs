@@ -83,6 +83,7 @@ pub struct AppStatusStrings {
   pub party_needs_spotify: &'static str,
   pub music_cannot_queue: &'static str,
   pub friend_code_copied: &'static str,
+  pub link_copied: &'static str,
   pub sync_hint: &'static str,
   pub mirroring: &'static str,
   pub radio_favorited: &'static str,
@@ -214,6 +215,7 @@ pub const EN: AppStatusStrings = AppStatusStrings {
   party_needs_spotify: "Listening Party needs Spotify. Press `d` and pick Spotify to log in.",
   music_cannot_queue: "Apple Music tracks can't be queued",
   friend_code_copied: "Copied friend code: {code}",
+  link_copied: "Copied link: {url}",
   sync_hint: "Playlist sync: {hint}",
   mirroring: "Mirroring {name} onto {source}",
   radio_favorited: "Favorited radio station: {name}",
@@ -348,6 +350,7 @@ pub const ZH_HANS: AppStatusStrings = AppStatusStrings {
   party_needs_spotify: "一起听需要 Spotify。按 `d` 并选择 Spotify 登录。",
   music_cannot_queue: "Apple Music 歌曲无法加入队列",
   friend_code_copied: "已复制好友代码：{code}",
+  link_copied: "已复制链接：{url}",
   sync_hint: "播放列表同步：{hint}",
   mirroring: "正在将 {name} 镜像到 {source}",
   radio_favorited: "已收藏电台：{name}",
@@ -483,6 +486,7 @@ pub const ZH_HANT: AppStatusStrings = AppStatusStrings {
   party_needs_spotify: "一起聽需要 Spotify。按 `d` 並選擇 Spotify 登入。",
   music_cannot_queue: "Apple Music 歌曲無法加入佇列",
   friend_code_copied: "已複製好友代碼：{code}",
+  link_copied: "已複製連結：{url}",
   sync_hint: "播放清單同步：{hint}",
   mirroring: "正在將 {name} 鏡像到 {source}",
   radio_favorited: "已收藏電台：{name}",
@@ -560,6 +564,9 @@ impl AppStatusStrings {
   }
   pub fn friend_code_copied(&self, code: &str) -> String {
     crate::core::i18n::format_template(self.friend_code_copied, &[("code", code)])
+  }
+  pub fn link_copied(&self, url: &str) -> String {
+    crate::core::i18n::format_template(self.link_copied, &[("url", url)])
   }
   pub fn sync_hint(&self, hint: &str) -> String {
     crate::core::i18n::format_template(self.sync_hint, &[("hint", hint)])
