@@ -1,0 +1,38 @@
+# Fork-only helper, never committed to an issue branch. It is pushed on a
+# throwaway `fixup/<N>` branch. It formats the tree the way CI checks it,
+# refreshes Cargo.lock, and uploads the changes as a patch.
+name: Fixup patch
+
+on:
+  push:
+    branches: ["fixup/**"]
+
+permissions:
+  contents: read
+
+jobs:
+  fixup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
+      - name: rustfmt
+        run: cargo fmt --all
+      - name: Refresh Cargo.lock (no build)
+        run: cargo metadata --format-version 1 > /dev/null
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: prettier
+        working-directory: gui
+        run: npm ci --ignore-scripts && npx prettier --write .
+      - name: Make the patch
+        run: |
+          git diff -- . ':(exclude).github/workflows/fixup.yml' > fixup.patch
+          git diff --stat -- . ':(exclude).github/workflows/fixup.yml'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: fixup-patch
+          path: fixup.patch
