@@ -157,3 +157,10 @@ fn the_soloist_quality_choices_read_in_the_language_without_changing_the_stored_
   assert_eq!(ZH_HANS.settings.option_label(id, "Very high"), "极高");
   assert_eq!(ZH_HANT.settings.option_label(id, "Lossless"), "無損");
 }
+
+#[test]
+fn zh_hans_playlist_sort_title_uses_the_sidebar_word_for_playlists() {
+  let word = ZH_HANS.sidebar.playlists;
+  assert!(ZH_HANS.popups.sort_playlists.contains(word));
+  assert!(ZH_HANS.gui.sort_playlists.contains(word));
+}
