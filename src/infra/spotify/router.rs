@@ -360,6 +360,48 @@ mod tests {
     );
   }
 
+  #[test]
+  fn upstream_error_maps_each_error_kind_to_its_status() {
+    use librespot_core::Error;
+    let status = |error| {
+      upstream_error(error)
+        .downcast::<SpotifyApiError>()
+        .unwrap()
+        .status
+    };
+    assert_eq!(status(Error::not_found("x")), StatusCode::NOT_FOUND);
+    assert_eq!(status(Error::permission_denied("x")), StatusCode::FORBIDDEN);
+    assert_eq!(
+      status(Error::unauthenticated("x")),
+      StatusCode::UNAUTHORIZED
+    );
+    assert_eq!(
+      status(Error::resource_exhausted("x")),
+      StatusCode::TOO_MANY_REQUESTS
+    );
+    assert_eq!(
+      status(Error::invalid_argument("x")),
+      StatusCode::BAD_REQUEST
+    );
+    assert_eq!(
+      status(Error::failed_precondition("x")),
+      StatusCode::BAD_REQUEST
+    );
+    assert_eq!(
+      status(Error::internal("x")),
+      StatusCode::SERVICE_UNAVAILABLE
+    );
+  }
+
+  #[test]
+  fn upstream_error_retry_check_only_matches_server_errors() {
+    use librespot_core::Error;
+    assert!(is_server_error(&Error::unavailable(
+      "HTTP 503 Service Unavailable"
+    )));
+    assert!(!is_server_error(&Error::not_found("HTTP 404 Not Found")));
+  }
+
   #[tokio::test]
   async fn an_unknown_path_is_not_implemented() {
     let error = route(&Method::GET, "browse/new-releases", &[], None)
