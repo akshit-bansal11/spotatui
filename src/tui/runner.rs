@@ -75,6 +75,13 @@ fn modal_captures_key_before_back(app: &App) -> bool {
   app.plugin_popup.is_some() || app.get_current_route().active_block == ActiveBlock::SortMenu
 }
 
+/// The Friends search box (once it holds text) and the add-friend dialog are typing
+/// surfaces; an idle Friends list is not, so `q` still goes back there.
+fn friends_captures_key_before_back(app: &App) -> bool {
+  app.get_current_route().active_block == ActiveBlock::Friends
+    && (app.view.friend_add_dialog_visible || !app.view.friend_search_input.is_empty())
+}
+
 /// Blocks that must see the configurable back key *before* the runner acts on it
 /// themselves. Ordering is the whole point, so this is one predicate rather than
 /// two conditions spelled out at the call site: a screen that is missing here has
@@ -82,6 +89,9 @@ fn modal_captures_key_before_back(app: &App) -> bool {
 /// copes with it.
 fn key_reaches_handlers_before_back(app: &App, key: Key) -> bool {
   if modal_captures_key_before_back(app) {
+    return true;
+  }
+  if friends_captures_key_before_back(app) {
     return true;
   }
   #[cfg(feature = "ai-dj")]
@@ -768,6 +778,28 @@ mod tests {
 
     assert_eq!(app.view.playlist_picker_filter, "q");
     assert_eq!(app.get_current_route().id, RouteId::Dialog);
+  }
+
+  #[test]
+  fn typing_q_into_the_friend_search_types_it() {
+    let mut app = app();
+    app.push_navigation_stack(RouteId::Friends, ActiveBlock::Friends);
+    app.view.friend_search_input = vec!['a'];
+
+    assert!(!dispatch_key(Key::Char('q'), &mut app));
+
+    assert_eq!(app.view.friend_search_input, vec!['a', 'q']);
+    assert_eq!(app.get_current_route().id, RouteId::Friends);
+  }
+
+  #[test]
+  fn q_on_the_idle_friends_list_goes_back() {
+    let mut app = app();
+    app.push_navigation_stack(RouteId::Friends, ActiveBlock::Friends);
+
+    assert!(!dispatch_key(Key::Char('q'), &mut app));
+
+    assert_ne!(app.get_current_route().id, RouteId::Friends);
   }
 
   #[test]
