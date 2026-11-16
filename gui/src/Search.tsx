@@ -2,6 +2,7 @@ import { EN, type GuiStrings, fmt, tabLabel, sourceLabel } from "./i18n";
 import {
   memo,
   useCallback,
+  useEffect,
   useLayoutEffect,
   useRef,
   useState,
@@ -87,9 +88,14 @@ export const Search = memo(function Search({
   const shows = (search?.shows ?? []).filter((show) => show.id !== null);
   const asked = query.trim();
   const others = active && asked ? otherSources(compiled, active) : [];
-  const rerun = () => {
-    if (asked) run(asked);
-  };
+  // Any source change (this picker, Your Library, command mode) searches again in the new
+  // source, so the results never belong to another source than the label says.
+  const lastActive = useRef(active);
+  useEffect(() => {
+    const before = lastActive.current;
+    lastActive.current = active;
+    if (before && active && before !== active && asked) run(asked);
+  }, [active, asked, run]);
   const nothing =
     tracks.length +
       artists.length +
@@ -159,7 +165,6 @@ export const Search = memo(function Search({
               const picked = compiled.find((s) => s === event.target.value);
               if (!picked) return;
               send({ SelectSource: picked });
-              rerun();
             }}
           >
             {compiled.map((choice) => (
@@ -271,10 +276,7 @@ export const Search = memo(function Search({
             <button
               key={other}
               type="button"
-              onClick={() => {
-                send({ SelectSource: other });
-                rerun();
-              }}
+              onClick={() => send({ SelectSource: other })}
             >
               <SourceBadge s={s} source={other} />
               <span>
