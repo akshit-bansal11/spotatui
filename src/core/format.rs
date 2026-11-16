@@ -195,6 +195,34 @@ mod tests {
   }
 
   #[test]
+  fn parser_keeps_multibyte_literals_intact() {
+    let t = Template::parse("♪ {state} → ok", KEYS).unwrap();
+    assert_eq!(t.render(&["Playing", "", ""]), "♪ Playing → ok");
+    let t = Template::parse("🎵 {state}", KEYS).unwrap();
+    assert_eq!(t.render(&["Playing", "", ""]), "🎵 Playing");
+    let t = Template::parse("{state} 正在播放", KEYS).unwrap();
+    assert_eq!(t.render(&["Playing", "", ""]), "Playing 正在播放");
+  }
+
+  #[test]
+  fn parser_trims_spaces_inside_a_placeholder() {
+    let t = Template::parse("{ state }", KEYS).unwrap();
+    assert_eq!(t.render(&["Playing", "", ""]), "Playing");
+  }
+
+  #[test]
+  fn parser_reads_escaped_brace_right_after_a_placeholder() {
+    let t = Template::parse("{state}}}", KEYS).unwrap();
+    assert_eq!(t.render(&["Playing", "", ""]), "Playing}");
+  }
+
+  #[test]
+  fn parser_names_an_unknown_non_ascii_key() {
+    let err = Template::parse("{ünknown}", KEYS).unwrap_err();
+    assert!(err.to_string().contains("ünknown"));
+  }
+
+  #[test]
   fn unbalanced_brace_errors() {
     assert!(Template::parse("{state", KEYS).is_err());
     assert!(Template::parse("state}", KEYS).is_err());
