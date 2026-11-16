@@ -51,6 +51,7 @@ use crate::core::app::{
 };
 use crate::core::requirement::{Availability, Capability, Requirement};
 use crate::core::source::Source;
+use crate::infra::network::sync::PartyStatus;
 use crate::tui::event::Key;
 
 pub use announcement_prompt::dismiss as dismiss_announcement;
@@ -348,7 +349,14 @@ pub fn handle_app(key: Key, app: &mut App) {
       app.push_navigation_stack(RouteId::CoverArtView, ActiveBlock::CoverArtView);
     }
     _ if key == app.user_config.keys.listening_party => {
-      app.apply(Action::Navigate(NavTarget::Party));
+      // A running party stays reachable so it can be left; only a fresh one needs a session.
+      let needs_session = *app.party_status() == PartyStatus::Disconnected
+        && app.availability(Requirement::SpotifySession) != Availability::Available;
+      if needs_session {
+        app.set_status_message(app.strings().status.app.party_needs_spotify, 6);
+      } else {
+        app.apply(Action::Navigate(NavTarget::Party));
+      }
     }
     _ if key == app.user_config.keys.like_track => {
       if is_input_mode(app) {
@@ -1549,5 +1557,45 @@ mod tests {
 
     assert_eq!(app.get_current_route().id, RouteId::Home);
     assert_eq!(app.get_current_route().active_block, ActiveBlock::Empty);
+  }
+
+  // --- Listening Party key needs a session (issue #1041) ---
+
+  #[test]
+  fn party_key_without_a_spotify_session_shows_a_hint_instead_of_the_popup() {
+    let mut app = App::default();
+
+    handle_app(app.user_config.keys.listening_party, &mut app);
+
+    assert_ne!(app.get_current_route().id, RouteId::Party);
+    assert_eq!(
+      app.status_message(),
+      Some(app.strings().status.app.party_needs_spotify)
+    );
+  }
+
+  #[test]
+  fn party_key_with_a_spotify_session_opens_the_popup() {
+    let mut app = App::default_connected();
+
+    handle_app(app.user_config.keys.listening_party, &mut app);
+
+    assert_eq!(app.get_current_route().id, RouteId::Party);
+  }
+
+  #[test]
+  fn party_key_opens_a_running_party_without_a_session() {
+    for status in [
+      PartyStatus::Connecting,
+      PartyStatus::Hosting,
+      PartyStatus::Joined,
+    ] {
+      let mut app = App::default();
+      app.set_party_status(status);
+
+      handle_app(app.user_config.keys.listening_party, &mut app);
+
+      assert_eq!(app.get_current_route().id, RouteId::Party);
+    }
   }
 }
