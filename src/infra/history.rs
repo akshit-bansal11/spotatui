@@ -3353,6 +3353,34 @@ mod tests {
   }
 
   #[test]
+  fn recap_period_key_round_trips_through_parse_recap_period() {
+    for period in RecapPeriod::ALL_PERIODS {
+      assert_eq!(parse_recap_period(period.key()).unwrap(), period);
+    }
+  }
+
+  #[test]
+  fn parse_recap_period_rejects_unknown_keys() {
+    for key in ["week", "7D", ""] {
+      assert!(parse_recap_period(key).is_err());
+    }
+  }
+
+  #[test]
+  fn seven_and_thirty_day_recap_periods_keep_a_listen_exactly_at_the_edge() {
+    let now = Utc.with_ymd_and_hms(2026, 5, 20, 12, 0, 0).unwrap();
+    use RecapPeriod::{SevenDays, ThirtyDays};
+    for (period, days) in [(SevenDays, 7), (ThirtyDays, 30)] {
+      let mut at_edge = record_at(1, 60_000, true);
+      at_edge.ended_at = now - Duration::days(days);
+      let mut just_outside = record_at(2, 60_000, true);
+      just_outside.ended_at = now - Duration::days(days) - Duration::seconds(1);
+      let filtered = filter_listens_for_period_at(&[at_edge, just_outside], period, now);
+      assert_eq!(titles(&filtered), ["Track 1"]);
+    }
+  }
+
+  #[test]
   fn month_period_uses_the_local_month_east_of_utc() {
     let mut kept = record_at(1, 60_000, true);
     kept.ended_at = Utc.with_ymd_and_hms(2026, 9, 30, 22, 30, 0).unwrap();
