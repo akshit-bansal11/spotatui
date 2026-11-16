@@ -2512,6 +2512,59 @@ mod tests {
     );
   }
 
+  #[test]
+  fn playbar_badge_is_drawn_whole_or_not_at_all() {
+    let app = App::default();
+    for width in 1..=100u16 {
+      let area = Rect::new(0, 0, width, 1);
+      let mut terminal =
+        ratatui::Terminal::new(ratatui::backend::TestBackend::new(width, 1)).unwrap();
+      terminal
+        .draw(|f| {
+          draw_playbar_controls(f, &app, area);
+          draw_playbar_badge(f, &app, area, "FLAC 44.1".to_string());
+        })
+        .unwrap();
+      let row: String = terminal
+        .backend()
+        .buffer()
+        .content()
+        .iter()
+        .map(|cell| cell.symbol())
+        .collect();
+      assert!(
+        row.contains("FLAC 44.1") || !row.contains("FLAC"),
+        "width {width}: badge clipped: {row}"
+      );
+    }
+  }
+
+  #[test]
+  fn playbar_badge_is_dropped_when_the_row_is_too_narrow() {
+    let app = App::default();
+    let area = Rect::new(0, 0, 12, 1);
+    let mut terminal = ratatui::Terminal::new(ratatui::backend::TestBackend::new(12, 1)).unwrap();
+    terminal
+      .draw(|f| draw_playbar_badge(f, &app, area, "FLAC 44.1".to_string()))
+      .unwrap();
+    let row: String = terminal
+      .backend()
+      .buffer()
+      .content()
+      .iter()
+      .map(|cell| cell.symbol())
+      .collect();
+    assert!(!row.contains("FLAC"), "no partial badge: {row}");
+    for width in 0..=1u16 {
+      let area = Rect::new(0, 0, width, 1);
+      let mut terminal =
+        ratatui::Terminal::new(ratatui::backend::TestBackend::new(width, 1)).unwrap();
+      terminal
+        .draw(|f| draw_playbar_badge(f, &app, area, "FLAC 44.1".to_string()))
+        .unwrap();
+    }
+  }
+
   /// A live (radio) view must render the station, the ICY subtitle and a LIVE
   /// elapsed label — and must not divide by the zero duration (which would show
   /// a bogus `0:00/0:00` countdown instead).
