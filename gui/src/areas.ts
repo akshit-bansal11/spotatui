@@ -113,3 +113,10 @@ export function shellKey(press: ShellKey): ShellCommand | null {
   const target = AREAS.find((entry) => entry.key === press.key);
   return target ? { area: target.area } : null;
 }
+
+/** The history step a mouse side button asks for; null for every other button. */
+export function mouseNav(button: number): "back" | "forward" | null {
+  if (button === 3) return "back";
+  if (button === 4) return "forward";
+  return null;
+}
