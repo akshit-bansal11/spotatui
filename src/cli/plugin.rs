@@ -129,21 +129,57 @@ fn add_plugin(config_dir: &Path, spec: &str, force: bool) -> Result<()> {
     .with_context(|| format!("creating {}", plugins_dir.display()))?;
   let dest = plugins_dir.join(&spec.name);
 
-  if dest.exists() {
-    if !force {
-      bail!(
-        "plugin '{}' is already installed. Use `--force` to reinstall.",
-        spec.name
-      );
+  if dest.exists() && !force {
+    bail!(
+      "plugin '{}' is already installed. Use `--force` to reinstall.",
+      spec.name
+    );
+  }
+
+  let staging = plugins_dir.join(format!(".{}.new", spec.name));
+  let backup = plugins_dir.join(format!(".{}.old", spec.name));
+  // Leftovers from an earlier crash. A backup is the only copy when `dest` is gone, so keep it.
+  let stale = if dest.exists() {
+    vec![&staging, &backup]
+  } else {
+    vec![&staging]
+  };
+  for leftover in stale {
+    if leftover.exists() {
+      std::fs::remove_dir_all(leftover)
+        .with_context(|| format!("removing leftover {}", leftover.display()))?;
     }
-    std::fs::remove_dir_all(&dest)
-      .with_context(|| format!("removing existing {}", dest.display()))?;
   }
 
   println!("Cloning {} into {} ...", spec.url, dest.display());
-  git_clone(&spec.url, &dest)?;
-  let rev = git_head_rev(&dest).unwrap_or_default();
+  if let Err(e) = git_clone(&spec.url, &staging) {
+    let _ = std::fs::remove_dir_all(&staging);
+    return Err(e);
+  }
 
+  // Swap in the new copy. The old one moves aside first (Windows cannot rename onto an existing
+  // folder) and is put back if the swap fails.
+  let had_old = dest.exists();
+  let moved = if had_old {
+    std::fs::rename(&dest, &backup)
+  } else {
+    Ok(())
+  };
+  if let Err(e) = moved {
+    let _ = std::fs::remove_dir_all(&staging);
+    return Err(e).with_context(|| format!("moving aside existing {}", dest.display()));
+  }
+  if let Err(e) = std::fs::rename(&staging, &dest) {
+    if had_old {
+      let _ = std::fs::rename(&backup, &dest);
+    }
+    let _ = std::fs::remove_dir_all(&staging);
+    return Err(e).with_context(|| format!("installing {}", dest.display()));
+  }
+  if had_old {
+    let _ = std::fs::remove_dir_all(&backup);
+  }
+  let rev = git_head_rev(&dest).unwrap_or_default();
   let lock_path = lock_path(config_dir);
   let mut lock = load_lock(&lock_path)?;
   lock.upsert(LockedPlugin {
@@ -654,6 +690,23 @@ fn run_git(dir: &Path, args: &[&str]) -> Result<()> {
 #[cfg(test)]
 mod tests {
   use super::*;
+
+  #[test]
+  fn failed_force_reinstall_keeps_the_installed_plugin() {
+    let dir = tempfile::tempdir().unwrap();
+    let plugin = dir.path().join("plugins").join("foo");
+    std::fs::create_dir_all(&plugin).unwrap();
+    std::fs::write(plugin.join("main.lua"), "-- old").unwrap();
+
+    let result = add_plugin(dir.path(), "file:///nonexistent/foo", true);
+
+    assert!(result.is_err());
+    assert_eq!(
+      std::fs::read_to_string(plugin.join("main.lua")).unwrap(),
+      "-- old"
+    );
+    assert!(!dir.path().join("plugins").join(".foo.new").exists());
+  }
 
   #[test]
   fn parse_github_shorthand() {
