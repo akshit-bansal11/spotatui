@@ -77,6 +77,15 @@ const page = (
 const order = (html: string) =>
   [...html.matchAll(/class="title">([^<]+)</g)].map((match) => match[1]);
 
+describe("ListPage playlist link", () => {
+  it("shows the playlist link button only on a Spotify playlist", () => {
+    const button = 'aria-label="Copy link"';
+    expect(page(mix)).toContain(button);
+    expect(page({ page: "liked" })).not.toContain(button);
+    expect(page({ ...mix, source: "Local" })).not.toContain(button);
+  });
+});
+
 describe("ListPage sort and filter", () => {
   it("offers a Filter field and a Sort by select in the list actions", () => {
     const html = page({ page: "liked" });

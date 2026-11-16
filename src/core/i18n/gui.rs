@@ -430,6 +430,7 @@ pub struct GuiStrings {
   pub remove_from_library: &'static str,
   pub copy_album_link: &'static str,
   pub copied_album_link: &'static str,
+  pub copied_playlist_link: &'static str,
   pub cancel: &'static str,
   pub create: &'static str,
   pub delete: &'static str,
