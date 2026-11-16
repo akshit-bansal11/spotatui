@@ -4,6 +4,9 @@ use crate::tui::event::Key;
 
 pub fn handler(key: Key, app: &mut App) {
   match key {
+    Key::Esc => {
+      app.apply(Action::DismissRecapPrompt);
+    }
     Key::Enter | Key::Char('o') => {
       app.apply(Action::OpenRecap);
     }
