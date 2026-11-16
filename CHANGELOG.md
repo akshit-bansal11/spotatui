@@ -27,6 +27,7 @@
 
 ### Documentation
 
+- **Proxy and startup timeout documented**: `docs/native-streaming.md` now explains `SPOTATUI_STREAMING_PROXY`, the standard proxy variables and `SPOTATUI_STREAMING_INIT_TIMEOUT_SECS` ([#1028](https://github.com/LargeModGames/spotatui/issues/1028)).
 - **Document `SPOTATUI_PAUSE_ON_PANIC`**: explain how setting `SPOTATUI_PAUSE_ON_PANIC` keeps the Windows console window open after a panic to read the crash message and log path ([#1065](https://github.com/LargeModGames/spotatui/issues/1065)).
 
 ## [v0.48.0] 2026-11-07
