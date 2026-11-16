@@ -147,7 +147,9 @@ export const TrackTable = memo(function TrackTable({
               <span className="title-cell">
                 {showCover && <Cover src={track.image_url} size={40} />}
                 <span className="title-text">
-                  <span className="title">{track.name}</span>
+                  <span className="title" title={track.name}>
+                    {track.name}
+                  </span>
                   <span className="artists">
                     {source && source !== "Spotify" && (
                       <SourceBadge s={s} source={source} />
@@ -163,7 +165,7 @@ export const TrackTable = memo(function TrackTable({
                 </span>
               </span>
               {showAlbum && (
-                <span className="album">
+                <span className="album" title={track.album}>
                   {open &&
                   sourceOf(track.uri) === "Spotify" &&
                   track.album_id ? (

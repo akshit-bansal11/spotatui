@@ -64,7 +64,7 @@ describe("AlbumPage", () => {
   it("heads the page with the kind, the title and the meta line", () => {
     const html = render("al", album);
     expect(html).toContain(">Single<");
-    expect(html).toContain("<h1>Cloud Nine</h1>");
+    expect(html).toContain('<h1 title="Cloud Nine">Cloud Nine</h1>');
     expect(html).toMatch(/<button[^>]*class="meta-link"[^>]*>Kygo<\/button>/);
     expect(html).not.toMatch(/<button[^>]*>Guest<\/button>/);
     expect(html).toContain("2016");

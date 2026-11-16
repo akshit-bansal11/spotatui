@@ -69,7 +69,7 @@ const render = (id: string, artist: ArtistPayload | null) =>
 describe("ArtistPage", () => {
   it("shows a loading header with the name before the artist landed", () => {
     const html = render("ky", null);
-    expect(html).toContain("<h1>Kygo</h1>");
+    expect(html).toContain('<h1 title="Kygo">Kygo</h1>');
     expect(html).not.toContain("Popular");
   });
 
