@@ -75,6 +75,12 @@ fn modal_captures_key_before_back(app: &App) -> bool {
   app.plugin_popup.is_some() || app.get_current_route().active_block == ActiveBlock::SortMenu
 }
 
+/// The Create Playlist form is a typing surface (name and track search), so it gets
+/// every key. Its own Esc arms leave through `close_form`, which also clears the form.
+fn create_playlist_form_captures_key_before_back(app: &App) -> bool {
+  app.get_current_route().active_block == ActiveBlock::CreatePlaylistForm
+}
+
 /// Blocks that must see the configurable back key *before* the runner acts on it
 /// themselves. Ordering is the whole point, so this is one predicate rather than
 /// two conditions spelled out at the call site: a screen that is missing here has
@@ -86,6 +92,9 @@ fn key_reaches_handlers_before_back(app: &App, key: Key) -> bool {
   }
   #[cfg(feature = "ai-dj")]
   if dj_captures_key_before_back(app) {
+    return true;
+  }
+  if create_playlist_form_captures_key_before_back(app) {
     return true;
   }
   if handlers::playlist_picker_captures_key(app, key) {
@@ -768,6 +777,22 @@ mod tests {
 
     assert_eq!(app.view.playlist_picker_filter, "q");
     assert_eq!(app.get_current_route().id, RouteId::Dialog);
+  }
+
+  #[test]
+  fn typing_q_into_the_new_playlist_name_types_it() {
+    let mut app = app();
+    app.push_navigation_stack(RouteId::CreatePlaylist, ActiveBlock::CreatePlaylistForm);
+
+    assert!(!dispatch_key(Key::Char('q'), &mut app));
+
+    assert_eq!(app.view.create_playlist_name, ['q']);
+    assert_eq!(app.get_current_route().id, RouteId::CreatePlaylist);
+
+    assert!(!dispatch_key(Key::Esc, &mut app));
+
+    assert_ne!(app.get_current_route().id, RouteId::CreatePlaylist);
+    assert!(app.view.create_playlist_name.is_empty());
   }
 
   #[test]
