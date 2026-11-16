@@ -70,6 +70,38 @@ On PipeWire this usually means the ALSA bridge isn't installed. Install `pipewir
 
 To use a different ALSA device, set `SPOTATUI_STREAMING_AUDIO_DEVICE` to a name from `aplay -L`, for example `SPOTATUI_STREAMING_AUDIO_DEVICE=pipewire spotatui` or `plughw:0,0`. This only applies to Spotify playback; the other sources use the system default output.
 
+## Proxy and slow networks
+
+On a network that only allows outbound traffic through a proxy, the Spotify login hangs unless spotatui knows the proxy. spotatui checks these variables in this order and uses the first one that is set and not empty:
+
+1. `SPOTATUI_STREAMING_PROXY` (use it to give Spotify a different proxy than the rest of your system)
+2. `https_proxy`
+3. `HTTPS_PROXY`
+4. `http_proxy`
+5. `HTTP_PROXY`
+
+- Only `http://` proxy URLs work, even in `https_proxy`. An `https://` value is ignored, with a warning in the [log](configuration.md#logging) that says to write `http://` instead. `socks5://`, other schemes and a value without a scheme are ignored too.
+- If the first value found is invalid, spotatui does not try the next variable. It ignores the proxy and connects directly.
+- A user name and password in the URL are dropped with a warning. A proxy that requires a login answers 407, and native streaming does not start.
+- The proxy applies to both Spotify connections (the login session and the native player). `SPOTATUI_STREAMING_PROXY` is read only for these two. The standard variables are also read by spotatui's other HTTP requests on their own, through the HTTP client's usual proxy support, with its own rules.
+- Even for Spotify, only the access-point connection uses the proxy. The dealer websocket does not. On a network that blocks all direct outbound connections, the Connect device still won't register.
+
+`SPOTATUI_STREAMING_INIT_TIMEOUT_SECS` sets how long spotatui waits for native streaming to start, in whole seconds. The default is 30. `0` or a value that is not a number keeps 30. It bounds the Spirc handshake; starting the whole player gets 15 seconds more. After a timeout, native streaming is skipped for that run and the saved login is kept. Raise the value on a slow network.
+
+PowerShell:
+
+```pwsh
+$env:SPOTATUI_STREAMING_PROXY = "http://proxy.example:3128"
+$env:SPOTATUI_STREAMING_INIT_TIMEOUT_SECS = "60"
+spotatui
+```
+
+bash:
+
+```bash
+SPOTATUI_STREAMING_PROXY=http://proxy.example:3128 SPOTATUI_STREAMING_INIT_TIMEOUT_SECS=60 spotatui
+```
+
 ---
 
 ## Audio Backends
