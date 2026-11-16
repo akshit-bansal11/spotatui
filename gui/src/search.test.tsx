@@ -140,9 +140,9 @@ describe("Search", () => {
   });
 
   it("announces to screen readers when a search found nothing", () => {
-    expect(
-      render({ ...results, tracks: [], artists: [], albums: [] }),
-    ).toMatch(/<p class="search-note" role="status">No results found/);
+    expect(render({ ...results, tracks: [], artists: [], albums: [] })).toMatch(
+      /<p class="search-note" role="status">No results found/,
+    );
     expect(render(results)).not.toContain('role="status"');
   });
 });
