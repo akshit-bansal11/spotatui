@@ -22,6 +22,8 @@ import {
 } from "./libraryModel";
 import "./ListPage.css";
 import type { OpenView, View } from "./nav";
+import { copyLink, playlistLink } from "./pagesModel";
+import "./Pages.css";
 import {
   filterTracks,
   isDefaultSort,
@@ -37,6 +39,7 @@ import { SourceBadge } from "./SourceBadge";
 import { TrackTable } from "./TrackTable";
 import type { RowContext } from "./trackMenuModel";
 import { PageHeader, PlayButton } from "./ui";
+import { useStringsReader } from "./useStringsReader";
 
 const NO_TRACKS: TrackInfo[] = [];
 const NO_URIS: string[] = [];
@@ -71,7 +74,10 @@ export function ListPage({
   /** The sort a list opens with, `field[:desc]`. */
   defaultSort?: string | null;
 }) {
+  const readStrings = useStringsReader(s);
   const playlist = view.page === "playlist" ? view : null;
+  const link =
+    playlist?.source === "Spotify" ? playlistLink(playlist.uri) : null;
   // The shell hands Liked Songs a fresh object each render, a playlist the view it opened.
   const shown = playlist ?? "liked";
   // The wanted row; a `j` past the end lands on the first row the next page brings.
@@ -253,6 +259,25 @@ export function ListPage({
         >
           <Glyph name="shuffle" size={28} />
         </button>
+        {link && (
+          <button
+            type="button"
+            className="icon-action"
+            aria-label={s.copy_link}
+            title={s.copy_link}
+            onClick={() =>
+              void copyLink(
+                link,
+                "copied_playlist_link",
+                send,
+                navigator.clipboard,
+                readStrings,
+              )
+            }
+          >
+            <Glyph name="link" size={28} />
+          </button>
+        )}
         <div className="list-tools">
           <span className="list-count" aria-live="polite">
             {filtering &&

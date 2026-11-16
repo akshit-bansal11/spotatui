@@ -106,11 +106,20 @@ export function radioRows(
   return table && table.radio === seed ? table.tracks : null;
 }
 
+const PLAYLIST_URI = "spotify:playlist:";
+
+/** The open.spotify.com link of a `spotify:playlist:<id>` URI; null for any other URI. */
+export function playlistLink(uri: string): string | null {
+  const id = uri.startsWith(PLAYLIST_URI) && uri.slice(PLAYLIST_URI.length);
+  return id ? `https://open.spotify.com/playlist/${id}` : null;
+}
+
 /** Copy a link and report it in a toast, the way the track menu does. */
 export function copyLink(
   text: string,
   done:
     | "copied_album_link"
+    | "copied_playlist_link"
     | "copied_song_link"
     | "copied_show_link"
     | "copied_episode_link"

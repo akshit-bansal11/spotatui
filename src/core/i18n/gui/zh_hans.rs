@@ -419,6 +419,7 @@ pub const ZH_HANS: GuiStrings = GuiStrings {
   remove_from_library: "从音乐库移除",
   copy_album_link: "复制专辑链接",
   copied_album_link: "已复制专辑链接。",
+  copied_playlist_link: "已复制播放列表链接。",
   cancel: "取消",
   create: "创建",
   delete: "删除",

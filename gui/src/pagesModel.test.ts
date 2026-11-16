@@ -13,6 +13,7 @@ import {
   discoverView,
   loadLatch,
   lengthLine,
+  playlistLink,
   radioRows,
   releaseLine,
   trackKey,
@@ -168,6 +169,17 @@ describe("radioRows", () => {
   });
 });
 
+describe("playlistLink", () => {
+  it("builds the playlist link only from a spotify:playlist: URI", () => {
+    expect(playlistLink("spotify:playlist:mix")).toBe(
+      "https://open.spotify.com/playlist/mix",
+    );
+    expect(playlistLink("local:playlist:mix")).toBeNull();
+    expect(playlistLink("spotify:album:al")).toBeNull();
+    expect(playlistLink("spotify:playlist:")).toBeNull();
+  });
+});
+
 describe("copyLink", () => {
   const link = "https://open.spotify.com/album/al";
 
@@ -181,6 +193,23 @@ describe("copyLink", () => {
     });
     expect(written).toEqual([link]);
     expect(sent).toEqual([{ Notify: ["Copied the album link.", 3] }]);
+  });
+
+  it("copies the playlist link", async () => {
+    const sent: Action[] = [];
+    const written: string[] = [];
+    await copyLink(
+      "https://open.spotify.com/playlist/mix",
+      "copied_playlist_link",
+      (a) => sent.push(a),
+      {
+        writeText: async (text) => {
+          written.push(text);
+        },
+      },
+    );
+    expect(written).toEqual(["https://open.spotify.com/playlist/mix"]);
+    expect(sent).toEqual([{ Notify: ["Copied the playlist link.", 3] }]);
   });
 
   it("reports an error when the write fails or there is no clipboard", async () => {
@@ -198,6 +227,7 @@ describe("copyLink", () => {
 
 for (const key of [
   "copied_album_link",
+  "copied_playlist_link",
   "copied_song_link",
   "copied_show_link",
   "copied_episode_link",

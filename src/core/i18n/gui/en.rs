@@ -421,6 +421,7 @@ pub const EN: GuiStrings = GuiStrings {
   remove_from_library: "Remove from Your Library",
   copy_album_link: "Copy album link",
   copied_album_link: "Copied the album link.",
+  copied_playlist_link: "Copied the playlist link.",
   cancel: "Cancel",
   create: "Create",
   delete: "Delete",

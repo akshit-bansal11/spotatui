@@ -416,6 +416,7 @@ pub const ZH_HANT: GuiStrings = GuiStrings {
   remove_from_library: "從音樂庫移除",
   copy_album_link: "複製專輯連結",
   copied_album_link: "已複製專輯連結。",
+  copied_playlist_link: "已複製播放清單連結。",
   cancel: "取消",
   create: "建立",
   delete: "刪除",
