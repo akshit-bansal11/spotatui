@@ -171,7 +171,9 @@ fn dispatch_key(key: Key, app: &mut App) -> bool {
   } else if key_reaches_handlers_before_back(app, key) {
     handlers::handle_app(key, app);
   } else if key == app.user_config.keys.back {
-    if !handlers::leave_focused_pane(app)
+    if let ActiveBlock::Dialog(dialog_context) = current_active_block {
+      handlers::close_dialog_route(app, dialog_context);
+    } else if !handlers::leave_focused_pane(app)
       && !back_key_clears_playlist_filter(app, current_active_block)
     {
       if current_active_block == ActiveBlock::Settings {
@@ -454,6 +456,7 @@ pub async fn start_ui(
 mod tests {
   use super::*;
   use crate::core::action::Action;
+  use crate::core::app::DialogContext;
   use crate::core::app::TrackTableContext;
   use crate::core::geometry::Viewport;
   use crate::core::plugin_api::PluginPopup;
@@ -768,6 +771,23 @@ mod tests {
 
     assert_eq!(app.view.playlist_picker_filter, "q");
     assert_eq!(app.get_current_route().id, RouteId::Dialog);
+  }
+
+  #[test]
+  fn back_key_closes_a_confirmation_dialog_and_clears_its_state() {
+    let mut app = app();
+    app.push_navigation_stack(
+      RouteId::Dialog,
+      ActiveBlock::Dialog(DialogContext::RemoveTrackFromPlaylistConfirm),
+    );
+    app.view.dialog = Some("Song".to_string());
+    app.view.confirm = true;
+
+    assert!(!dispatch_key(Key::Char('q'), &mut app));
+
+    assert!(app.view.dialog.is_none());
+    assert!(!app.view.confirm);
+    assert_ne!(app.get_current_route().id, RouteId::Dialog);
   }
 
   #[test]
