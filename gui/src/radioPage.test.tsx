@@ -54,7 +54,7 @@ describe("RadioPage", () => {
     const html = render(table("seed", [track("Stay")]));
     expect(html).toContain('aria-label="Firestone Radio"');
     expect(html).toContain(">Song radio<");
-    expect(html).toContain("<h1>Firestone Radio</h1>");
+    expect(html).toContain('<h1 title="Firestone Radio">Firestone Radio</h1>');
     expect(html).toContain("Based on Firestone");
     expect(html).toContain("1 song");
   });

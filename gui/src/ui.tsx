@@ -103,7 +103,9 @@ export function Card({
             fallback={round ? "user" : "music"}
           />
         </span>
-        <span className="card-title">{title}</span>
+        <span className="card-title" title={title}>
+          {title}
+        </span>
         <span className="card-subtitle">{subtitle}</span>
       </button>
       {onPlay && (
@@ -204,7 +206,7 @@ export function PageHeader({
       />
       <div className="page-header-text">
         <span className="page-kind">{kind}</span>
-        <h1>{title}</h1>
+        <h1 title={title}>{title}</h1>
         {meta && <div className="page-meta">{meta}</div>}
       </div>
     </header>

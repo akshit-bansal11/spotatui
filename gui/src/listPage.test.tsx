@@ -75,7 +75,7 @@ const page = (
 
 /** The row titles in the order the table draws them. */
 const order = (html: string) =>
-  [...html.matchAll(/class="title">([^<]+)</g)].map((match) => match[1]);
+  [...html.matchAll(/class="title"[^>]*>([^<]+)</g)].map((match) => match[1]);
 
 describe("ListPage sort and filter", () => {
   it("offers a Filter field and a Sort by select in the list actions", () => {
@@ -187,5 +187,33 @@ describe("ListPage shuffle button", () => {
       />,
     );
     expect(shuffleButton(html)).toContain("disabled");
+  });
+});
+
+describe("ListPage names", () => {
+  it("cut off names show the full name on hover", () => {
+    const name = "A very long song title that the narrow window cuts off";
+    const album = "A very long album name that the narrow window cuts off";
+    const html = renderToStaticMarkup(
+      <ListPage
+        view={{ page: "liked" }}
+        liked={{
+          ...liked,
+          tracks: [{ ...track(name, 1000), album }],
+          total: 1,
+        }}
+        table={null}
+        playlists={null}
+        source={null}
+        playingUri={null}
+        statusRev={null}
+        statusError={false}
+        active
+        open={() => {}}
+        send={() => {}}
+      />,
+    );
+    expect(html).toContain(`class="title" title="${name}"`);
+    expect(html).toContain(`class="album" title="${album}"`);
   });
 });

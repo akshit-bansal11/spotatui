@@ -35,7 +35,7 @@ const render = (recent: TrackInfo[] | null, available = true) =>
 describe("RecentlyPlayed", () => {
   it("heads the page and counts the plays", () => {
     const html = render([track("Stay"), track("Firestone")]);
-    expect(html).toContain("<h1>Recently played</h1>");
+    expect(html).toContain('<h1 title="Recently played">Recently played</h1>');
     expect(html).toContain("2 songs");
     expect(html).toContain('aria-label="Play Recently played"');
   });

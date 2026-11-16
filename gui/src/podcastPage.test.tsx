@@ -64,7 +64,9 @@ const event = { stopPropagation() {} };
 describe("PodcastPage", () => {
   it("shows a loading header with the name before the show landed", () => {
     const html = render("s", null);
-    expect(html).toContain("<h1>Lex Fridman Podcast</h1>");
+    expect(html).toContain(
+      '<h1 title="Lex Fridman Podcast">Lex Fridman Podcast</h1>',
+    );
     expect(html).toContain("Loading episodes…");
     expect(html).not.toContain('role="listbox"');
   });
@@ -79,7 +81,9 @@ describe("PodcastPage", () => {
   it("heads the page with the kind, the publisher, the count and the description", () => {
     const html = render("s", { page: podcast });
     expect(html).toContain(">Podcast<");
-    expect(html).toContain("<h1>Lex Fridman Podcast</h1>");
+    expect(html).toContain(
+      '<h1 title="Lex Fridman Podcast">Lex Fridman Podcast</h1>',
+    );
     expect(html).toContain("Lex Fridman");
     expect(html).toContain("400 episodes");
     expect(html).toContain("Conversations about AI.");
