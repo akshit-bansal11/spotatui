@@ -83,7 +83,7 @@ On a network that only allows outbound traffic through a proxy, the Spotify logi
 - Only `http://` proxy URLs work, even in `https_proxy`. An `https://` value is ignored, with a warning in the [log](configuration.md#logging) that says to write `http://` instead. `socks5://`, other schemes and a value without a scheme are ignored too.
 - If the first value found is invalid, spotatui does not try the next variable. It ignores the proxy and connects directly.
 - A user name and password in the URL are dropped with a warning. A proxy that requires a login answers 407, and native streaming does not start.
-- The proxy applies to both Spotify connections (the login session and the native player). It does not apply to the other sources (Local, Subsonic, Radio, YouTube, Qobuz).
+- The proxy applies to both Spotify connections (the login session and the native player). `SPOTATUI_STREAMING_PROXY` is read only for these two. The standard variables are also read by spotatui's other HTTP requests on their own, through the HTTP client's usual proxy support, with its own rules.
 - Even for Spotify, only the access-point connection uses the proxy. The dealer websocket does not. On a network that blocks all direct outbound connections, the Connect device still won't register.
 
 `SPOTATUI_STREAMING_INIT_TIMEOUT_SECS` sets how long spotatui waits for native streaming to start, in whole seconds. The default is 30. `0` or a value that is not a number keeps 30. It bounds the Spirc handshake; starting the whole player gets 15 seconds more. After a timeout, native streaming is skipped for that run and the saved login is kept. Raise the value on a slow network.
