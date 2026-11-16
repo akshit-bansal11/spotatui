@@ -10,6 +10,10 @@
 - **Sort the playlists sidebar**: order the Spotify playlists by Spotify's own order, by what you played last in spotatui, or by name. Press `,` in the playlists sidebar or choose the order in Your Library in the GUI. The choice is saved in `state.yml`; folders keep their positions and the community playlist stays pinned first ([#657](https://github.com/LargeModGames/spotatui/issues/657)).
 - **Scroll to change the volume in the GUI**: the mouse wheel over the volume bar in the desktop app and the browser GUI steps the volume up or down by the same step as the arrow keys. A trackpad swipe adds up its small scroll events instead of stepping on each one, and the seek bar still ignores the wheel ([#1059](https://github.com/LargeModGames/spotatui/issues/1059)).
 
+### Changed
+
+- Tests now pin the recap period keys and the 7-day and 30-day window edges ([#1023](https://github.com/LargeModGames/spotatui/issues/1023)).
+
 ### Fixed
 
 - **Text Emphasis off no longer bolds the selected row**: with `behavior.enable_text_emphasis: false`, the highlighted row in every list and table keeps its reversed colors but is no longer drawn bold ([#822](https://github.com/LargeModGames/spotatui/issues/822)).
@@ -24,10 +28,6 @@
 - **A slow DNS resolver no longer fails the Spotify login**: the session connect had 15 s, and behind a dead first nameserver every lookup waits the resolver's 5 s timeout, so the login failed while the network worked. It now has 35 s, and a connect that still runs out says that it timed out and points at the network and DNS settings instead of a generic "Could not connect to Spotify" ([#977](https://github.com/LargeModGames/spotatui/issues/977)).
 
 - **Remove single-file plugins from the CLI**: `spotatui plugin remove flat.lua` now removes a loose Lua plugin using the exact filename shown by `plugin list`, while preserving other loose files ([#1048](https://github.com/LargeModGames/spotatui/issues/1048)).
-
-### Changed
-
-- Tests now pin the recap period keys and the 7-day and 30-day window edges ([#1023](https://github.com/LargeModGames/spotatui/issues/1023)).
 
 ### Documentation
 
