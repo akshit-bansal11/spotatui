@@ -196,6 +196,13 @@ describe("step", () => {
     expect(step("ArrowUp", 2, 3, true)).toEqual({ next: 1, loadMore: false });
     expect(step("x", 1, 3, true)).toBeNull();
   });
+
+  it("jumps to the first and the last loaded row on Home and End", () => {
+    expect(step("Home", 2, 5, true)).toEqual({ next: 0, loadMore: false });
+    expect(step("End", 1, 5, true)).toEqual({ next: 4, loadMore: false });
+    expect(clampCursor(step("End", 0, 0, false)!.next, 0)).toBe(-1);
+    expect(clampCursor(step("Home", 0, 0, false)!.next, 0)).toBe(-1);
+  });
 });
 
 describe("playRequest", () => {

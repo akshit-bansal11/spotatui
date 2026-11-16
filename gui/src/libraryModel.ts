@@ -96,6 +96,10 @@ export function step(
     case "k":
     case "ArrowUp":
       return { next: cursor - 1, loadMore: false };
+    case "Home":
+      return { next: 0, loadMore: false };
+    case "End":
+      return { next: length - 1, loadMore: false };
     default:
       return null;
   }
