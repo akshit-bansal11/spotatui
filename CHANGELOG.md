@@ -29,6 +29,10 @@
 
 - **Document `SPOTATUI_PAUSE_ON_PANIC`**: explain how setting `SPOTATUI_PAUSE_ON_PANIC` keeps the Windows console window open after a panic to read the crash message and log path ([#1065](https://github.com/LargeModGames/spotatui/issues/1065)).
 
+### Internal
+
+- **Tests for the Spotify router's error statuses**: a test now pins the HTTP status each librespot error kind maps to, and which errors a read retries ([#1025](https://github.com/LargeModGames/spotatui/issues/1025)).
+
 ## [v0.48.0] 2026-11-07
 
 ### Added
